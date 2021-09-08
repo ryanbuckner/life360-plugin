@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<MenuItems>
+    <MenuItem id="menu1">
+        <Name>Refresh Member Data</Name>
+        <CallbackMethod>refresh_member_data</CallbackMethod>
+    </MenuItem>
+</MenuItems>
