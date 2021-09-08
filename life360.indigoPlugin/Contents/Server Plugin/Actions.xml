@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<Actions>
+	<Action id="refresh_member_data" deviceFilter="self.members">
+		<Name>Refresh Life360 Member Data</Name>
+		<CallbackMethod>refresh_member_data</CallbackMethod>
+	</Action>
+</Actions>
