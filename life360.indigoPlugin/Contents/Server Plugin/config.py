@@ -5,5 +5,5 @@
 authorization_token = "cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg=="
 
 # your username and password (hope they are secure!)
-username = "" 
-password = ""
+username = "ryanbuckner@gmail.com"
+password = "Morganhall1!"

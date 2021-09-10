@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 ####################
-# Copyright (c) 2021 ryanbuckner
+# Copyright (c) 2021 ryanbuckner 
+# https://github.com/ryanbuckner/life360-plugin/wiki
 #
 # Based on neilk Solcast plugin
 
@@ -12,7 +13,6 @@ import indigo
 from life360 import life360
 import datetime
 from geopy.geocoders import Nominatim
-from config import authorization_token, password, username
 
 
 ################################################################################
@@ -27,11 +27,18 @@ class Plugin(indigo.PluginBase):
 	# Class properties
 	########################################
 
+
+
 	########################################
 	def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs):
 		super(Plugin, self).__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 		self.debug = pluginPrefs.get("showDebugInfo", False)
 		self.deviceList = []
+
+		self.authorization_token = self.pluginPrefs['authorizationtoken']
+		self.username = self.pluginPrefs['life360_username']
+		self.password = self.pluginPrefs['life360_password']
+		self.refresh_frequency = self.pluginPrefs['refresh_frequency']
 
 	########################################
 	def deviceStartComm(self, device):
@@ -67,6 +74,18 @@ class Plugin(indigo.PluginBase):
 			pass
 
 
+	def authenticate(self, login, password):
+		# Authenticate
+		# POST
+		try: 
+			api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
+			if api.authenticate():
+				return true
+			else: 
+				return false
+		except: 
+				return false
+
 
 	########################################
 	def update(self, device):
@@ -97,7 +116,7 @@ class Plugin(indigo.PluginBase):
 
 	def get_member_list(self, filter="", valuesDict=None, typeId="", targetId=0):
 		retList = []
-		api = life360(authorization_token=authorization_token, username=username, password=password)
+		api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
 		if api.authenticate():
 			circles = api.get_circles()
 			id = circles[0]['id']
