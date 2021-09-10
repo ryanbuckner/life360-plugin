@@ -11,13 +11,10 @@ Usage:
 
 Create an account on the life360 app which is free for limited use. This has only been tested on life360 premium accounts. 
 
-config.py: 
-
-Currently usernamae and password will be stored in the config file until the UI can store them
 
 In the plugin:
 
-Enter your username and password in the configuaraton
+Enter your username and password in the configuaraton and leave the token
 
 Devices: 
 
