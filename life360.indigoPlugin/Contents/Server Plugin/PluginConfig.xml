@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<PluginConfig>
+
+
+	<Field id="refresh_frequency" type="textfield" defaultValue="5">
+		<Label>Enter API Refresh Frequency in Minutes:</Label>
+	</Field>
+	<Field id="life360_username" type="textfield" defaultValue="">
+		<Label>Enter life30 username:</Label>
+	</Field>
+	<Field id="life360_password" type="textfield" defaultValue="">
+		<Label>Enter life360 password:</Label>
+	</Field>
+	<Field id="authorizationtoken" type="textfield" defaultValue="cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg==">
+		<Label>Enter authorization token:</Label>
+		<Description>This is a googleable code. Leave this code.</Description>
+	</Field>
+	<Field type="label" id="validationlabel" defaultValue="validation goes here">
+		<Label>label field</Label>
+		<Description></Description>
+	</Field>
+
+	<Field id="simpleseparator3" type="separator">
+
+	</Field>
+		<Field id="showDebugInfo" type="checkbox">
+		<Label>Enable debugging:</Label>
+		<Description>(not recommended)</Description>
+	</Field>
+</PluginConfig>
