@@ -69,6 +69,8 @@ class Plugin(indigo.PluginBase):
 			pollingFreq = 300
 
 		self.debugLog("Current polling frequency is: " + str(pollingFreq) + " seconds")
+
+		# Refresh device states immediately after the restarting the Plugin
 		iterationcount = 1
 
 		try:
@@ -253,7 +255,7 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
 
 				if (m['location']['name'] == "Home"):
-					device.updateStateImageOnServer(indigo.kStateImageSel.SensorOn)
+					device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
 				else:
 					device.updateStateImageOnServer(indigo.kStateImageSel.None)
 
