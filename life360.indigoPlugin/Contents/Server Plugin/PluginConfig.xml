@@ -11,12 +11,12 @@
 	<Field id="life360_password" type="textfield" defaultValue="">
 		<Label>Enter life360 password:</Label>
 	</Field>
-	<Field id="authorizationtoken" type="textfield" defaultValue="cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg==">
+	<Field id="authorizationtoken" type="textfield" readonly = "YES" defaultValue="cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg==">
 		<Label>Enter authorization token:</Label>
 		<Description>This is a googleable code. Leave this code.</Description>
 	</Field>
 	<Field type="label" id="validationlabel" defaultValue="validation goes here">
-		<Label>label field</Label>
+		<Label>Plugin Config will not close unless API authentication passes. Check the Event Log for messages</Label>
 		<Description></Description>
 	</Field>
 
