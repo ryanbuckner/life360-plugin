@@ -44,6 +44,7 @@ This alpha version has not been testedby any other users but myself.  It is my f
   - Longitude
   - Current Geofence
   - Closest known address 
+  - Wifi connected or not
   - Last API update 
 
 #### Installation
