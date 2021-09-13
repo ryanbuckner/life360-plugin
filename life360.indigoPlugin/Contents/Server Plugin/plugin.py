@@ -167,14 +167,9 @@ class Plugin(indigo.PluginBase):
 
 
 	def get_member_list(self, filter="", valuesDict=None, typeId="", targetId=0):
-		retList = []
-		api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
-		if api.authenticate():
-			circles = api.get_circles()
-			id = circles[0]['id']
-			circle = api.get_circle(id)
-			for m in circle['members']:
-				retList.append(m['firstName'])
+		if (len(self.member_list) == 0):
+			self.create_member_list()
+		retList = list(self.member_list.keys())
 		return retList
 
 
