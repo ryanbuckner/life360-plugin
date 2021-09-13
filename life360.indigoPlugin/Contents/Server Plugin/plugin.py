@@ -69,11 +69,14 @@ class Plugin(indigo.PluginBase):
 			pollingFreq = 300
 
 		self.debugLog("Current polling frequency is: " + str(pollingFreq) + " seconds")
+		iterationcount = 1
 
 		try:
 			while True:
-				self.sleep(1 * pollingFreq)
+				if (iterationcount > 1):
+					self.sleep(1 * pollingFreq)
 				self.get_new_life360json()
+				iterationcount += 1
 				for deviceId in self.deviceList:
 					# call the update method with the device instance
 					self.update(indigo.devices[deviceId])
@@ -107,7 +110,15 @@ class Plugin(indigo.PluginBase):
 			valuesDict['address'] = "Unknown"
 		return valuesDict
 
-		
+	#dump JSON to event log
+	def write_json_to_log(self):
+		if (len(self.life360data) == 0):
+			self.get_new_life360json()
+		self.debugLog(self.life360data)
+		indigo.server.log("Life360 data has been written to the debugLog. If you did not see it you may need to enable debugging in the Plugin Config UI")
+		return
+
+
 	########################################
 	# UI Validate, Plugin Preferences
 	########################################
@@ -224,6 +235,7 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_email','value': m['loginEmail']})
 				device_states.append({'key': 'member_360_location','value': m['location']['name']})
 				device_states.append({'key': 'member_battery','value': m['location']['battery']})
+				device_states.append({'key': 'member_wifi','value': m['location']['wifiState']})
 				device_states.append({'key': 'member_battery_charging','value': m['location']['charge']})
 				device_states.append({'key': 'member_lat','value': float(m['location']['latitude'])})
 				device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
@@ -238,7 +250,12 @@ class Plugin(indigo.PluginBase):
 					self.errorLog(u"Geocoder timed out: " + g.msg, type=plugin_name)
 					currentaddress = "unknown - geocoder error"
 
-		device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
+				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
+
+				if (m['location']['name'] == "Home"):
+					device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
+				else:
+					device.updateStateImageOnServer(indigo.kStateImageSel.None)
 
 		device.updateStatesOnServer(device_states)
 		return

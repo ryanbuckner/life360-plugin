@@ -71,6 +71,12 @@
 			<TriggerLabelPrefix>Battery Charging Changed to</TriggerLabelPrefix>
 			<ControlPageLabel>Member Battery Charging</ControlPageLabel>
 		</State>
+		<State id="member_wifi">
+			<ValueType>Boolean</ValueType>
+			<TriggerLabel>Member Wifi</TriggerLabel>
+			<TriggerLabelPrefix>Member Wifi Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member Wifi</ControlPageLabel>
+		</State>
 		<State id="member_lat">
 			<ValueType>String</ValueType>
 			<TriggerLabel>Member Latitude</TriggerLabel>
