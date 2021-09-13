@@ -253,7 +253,7 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
 
 				if (m['location']['name'] == "Home"):
-					device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
+					device.updateStateImageOnServer(indigo.kStateImageSel.SensorOn)
 				else:
 					device.updateStateImageOnServer(indigo.kStateImageSel.None)
 
