@@ -12,7 +12,11 @@
 import indigo
 from life360 import life360
 import datetime
-from geopy.geocoders import Nominatim
+try:
+	from geopy.geocoders import Nominatim
+except: 
+	self.errorLog("Geopy python library is not installed. Closest address location will be black. Install with 'pip install geopy' ")
+	pass
 
 
 ################################################################################
@@ -223,7 +227,11 @@ class Plugin(indigo.PluginBase):
 		device_states = []
 		member_device = device.pluginProps['membername']
 		self.debugLog("Updating device: " + member_device)
-		geocoder = Nominatim(user_agent='life360')
+		try: 
+			geocoder = Nominatim(user_agent='life360')
+		except:
+			self.errorLog("Error instantiating geocoder object")
+			pass
 		for m in self.life360data['members']:
 			if m['firstName'] == member_device:
 				x = datetime.datetime.now()
@@ -241,6 +249,7 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_battery_charging','value': m['location']['charge']})
 				device_states.append({'key': 'member_lat','value': float(m['location']['latitude'])})
 				device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
+				device_states.append({'key': 'member_is_driving','value': m['location']['isDriving']})
 				device_states.append({'key': 'last_api_update','value': str(cur_date_time)})
 				try: 
 					# get address from lat long information 
@@ -253,6 +262,13 @@ class Plugin(indigo.PluginBase):
 					currentaddress = "unknown - geocoder error"
 
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
+
+				if (m['location']['since']):
+					sincedate = datetime.datetime.fromtimestamp(m['location']['since'])
+					sincedatestr  = sincedate.strftime("%m/%d/%Y %I:%M %p")
+					device_states.append({'key': 'member_location_since_datetime','value': sincedatestr})
+				else: 
+					device_states.append({'key': 'member_location_since_datetime','value': ''})
 
 				if (m['location']['name'] == "Home"):
 					device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)

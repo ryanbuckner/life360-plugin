@@ -71,7 +71,7 @@
 			<TriggerLabelPrefix>Battery Charging Changed to</TriggerLabelPrefix>
 			<ControlPageLabel>Member Battery Charging</ControlPageLabel>
 		</State>
-		<State id="member_wifi">
+		<State id="member_wifi">	
 			<ValueType>Boolean</ValueType>
 			<TriggerLabel>Member Wifi</TriggerLabel>
 			<TriggerLabelPrefix>Member Wifi Changed to</TriggerLabelPrefix>
@@ -88,6 +88,17 @@
 			<TriggerLabel>Member Longitude</TriggerLabel>
 			<TriggerLabelPrefix>Longitude Changed to</TriggerLabelPrefix>
 			<ControlPageLabel>Member Longitude</ControlPageLabel>
+		</State>
+		<State id="member_is_driving">
+			<ValueType>Boolean</ValueType>
+			<TriggerLabel>Member Is Driving</TriggerLabel>
+			<TriggerLabelPrefix>Member Is Driving Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member Is Driving</ControlPageLabel>
+		</State>
+		<State id="member_location_since_datetime">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Member Location Since Timestamp</TriggerLabel>
+			<ControlPageLabel>Member Location Since Timestamp</ControlPageLabel>
 		</State>
 		<State id="last_api_update">
 			<ValueType>String</ValueType>
