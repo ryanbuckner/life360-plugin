@@ -38,9 +38,6 @@ class Plugin(indigo.PluginBase):
 		super(Plugin, self).__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 		self.debug = pluginPrefs.get("showDebugInfo", False)
 		self.deviceList = []
-
-		self.debugLog(pluginPrefs)
-
 		self.authorization_token = self.pluginPrefs['authorizationtoken']
 		self.username = self.pluginPrefs['life360_username']
 		self.password = self.pluginPrefs['life360_password']
@@ -74,7 +71,7 @@ class Plugin(indigo.PluginBase):
 
 		self.debugLog("Current polling frequency is: " + str(pollingFreq) + " seconds")
 
-		# Refresh device states immediately after the restarting the Plugin
+		# Refresh device states immediately after restarting the Plugin
 		iterationcount = 1
 
 		try:
@@ -121,7 +118,8 @@ class Plugin(indigo.PluginBase):
 		if (len(self.life360data) == 0):
 			self.get_new_life360json()
 		self.debugLog(self.life360data)
-		indigo.server.log("Life360 data has been written to the debugLog. If you did not see it you may need to enable debugging in the Plugin Config UI")
+		if (not self.debug):
+			indigo.server.log("Life360 data has been written to the debugLog. If you did not see it you may need to enable debugging in the Plugin Config UI")
 		return
 
 
@@ -210,6 +208,18 @@ class Plugin(indigo.PluginBase):
 		for m in self.life360data['members']:
 			self.member_list[m['firstName']] = m['id']
 		return
+
+	def toggleDebugging(self):
+		if self.debug:
+			indigo.server.log("Turning off debug logging")
+			self.debugLog(u"Turning off debug logging (Toggle Debugging menu item chosen).")
+			self.pluginPrefs['showDebugInfo'] = False
+		else:
+			indigo.server.log("Turning on debug logging")
+			self.pluginPrefs['showDebugInfo'] = True
+			self.debugLog(u"Turning on debug logging (Toggle Debugging menu item chosen).")
+			# Turn on/off for the Indigo log level.
+		self.debug = not self.debug
 
 
 	############################

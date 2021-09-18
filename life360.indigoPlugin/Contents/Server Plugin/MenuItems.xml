@@ -8,4 +8,8 @@
         <Name>Write JSON to Event Log</Name>
          <CallbackMethod>write_json_to_log</CallbackMethod>
     </MenuItem>
+    <MenuItem id="menu3" >
+        <Name>Toggle Debug</Name>
+         <CallbackMethod>toggleDebugging</CallbackMethod>
+    </MenuItem>
 </MenuItems>
