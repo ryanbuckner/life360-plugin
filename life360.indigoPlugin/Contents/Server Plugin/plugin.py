@@ -10,6 +10,7 @@
 # Imports
 ################################################################################
 import indigo
+import sys
 from life360 import life360
 import datetime
 try:
@@ -42,6 +43,17 @@ class Plugin(indigo.PluginBase):
 		self.username = self.pluginPrefs['life360_username']
 		self.password = self.pluginPrefs['life360_password']
 		self.refresh_frequency = self.pluginPrefs['refresh_frequency']
+
+		self.logger.info(u"")
+		self.logger.info(u"{0:=^130}".format("Starting Life360 Plugin Engine"))
+		self.logger.info(u"{0:<30} {1}".format("Plugin name:", pluginDisplayName))
+		self.logger.info(u"{0:<30} {1}".format("Plugin version:", pluginVersion))
+		self.logger.info(u"{0:<30} {1}".format("Plugin ID:", pluginId))
+		self.logger.info(u"{0:<30} {1}".format("Refresh Frequency:", str(self.refresh_frequency) + " minutes"))
+		self.logger.info(u"{0:<30} {1}".format("Indigo version:", indigo.server.version))
+		self.logger.info(u"{0:<30} {1}".format("Python version:", sys.version.replace('\n', '')))
+		self.logger.info(u"{0:<30} {1}".format("Python Directory:", sys.prefix.replace('\n', '')))
+		self.logger.info(u"{0:=^130}".format(""))
 
 		self.life360data = {}
 		self.member_list = {}
@@ -127,10 +139,10 @@ class Plugin(indigo.PluginBase):
 	# UI Validate, Plugin Preferences
 	########################################
 	def validatePrefsConfigUi(self, valuesDict):
-		if int(valuesDict['refresh_frequency']) < 3:
-			self.errorLog("Invalid entry for Refresh Frequency - must be greater than 2")
+		if int(valuesDict['refresh_frequency']) < 2:
+			self.errorLog("Invalid entry for Refresh Frequency - must be greater than 1")
 			errorsDict = indigo.Dict()
-			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 2"
+			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 1"
 			return (False, valuesDict, errorsDict)
 
 		if (not valuesDict['life360_username']):
@@ -267,8 +279,9 @@ class Plugin(indigo.PluginBase):
 					loclng = float(m['location']['longitude'])
 					geoloc = geocoder.reverse((loclat, loclng))
 					currentaddress = geoloc
-				except GeocoderTimedOut as g:
-					self.errorLog(u"Geocoder timed out: " + g.msg, type=plugin_name)
+					sleep(1) # terms of service requirement 
+				except Exception as g:
+					self.errorLog(u"Geocoder error: " + g.msg, type=plugin_name)
 					currentaddress = "unknown - geocoder error"
 
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })

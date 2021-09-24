@@ -5,7 +5,7 @@
 
 	<Name>Life360 Circle Member</Name>
 	<ConfigUI>
-		<SupportURL>http-//forums.indigodomo.com/viewforum.php?f=xxx</SupportURL>
+		<SupportURL>https://forums.indigodomo.com/viewforum.php?f=363</SupportURL>
 
 		<Field id="membername" type="menu">
                 <Label>Life360 Member:</Label>

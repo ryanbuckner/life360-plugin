@@ -25,6 +25,6 @@
 	</Field>
 		<Field id="showDebugInfo" type="checkbox">
 		<Label>Enable debugging:</Label>
-		<Description>(not recommended)</Description>
+		<Description>(recommended to turn off after specific debug)</Description>
 	</Field>
 </PluginConfig>
