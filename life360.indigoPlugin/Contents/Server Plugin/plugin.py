@@ -139,10 +139,10 @@ class Plugin(indigo.PluginBase):
 	# UI Validate, Plugin Preferences
 	########################################
 	def validatePrefsConfigUi(self, valuesDict):
-		if int(valuesDict['refresh_frequency']) < 2:
-			self.errorLog("Invalid entry for Refresh Frequency - must be greater than 1")
+		if int(valuesDict['refresh_frequency']) < 3:
+			self.errorLog("Invalid entry for Refresh Frequency - must be greater than 2")
 			errorsDict = indigo.Dict()
-			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 1"
+			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 2"
 			return (False, valuesDict, errorsDict)
 
 		if (not valuesDict['life360_username']):
@@ -279,9 +279,8 @@ class Plugin(indigo.PluginBase):
 					loclng = float(m['location']['longitude'])
 					geoloc = geocoder.reverse((loclat, loclng))
 					currentaddress = geoloc
-					sleep(1) # terms of service requirement 
 				except Exception as g:
-					self.errorLog(u"Geocoder error: " + g.msg, type=plugin_name)
+					self.debugLog(u"Geocoder error")
 					currentaddress = "unknown - geocoder error"
 
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })

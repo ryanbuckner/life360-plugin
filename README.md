@@ -7,7 +7,7 @@ This Indigo Plugin provides a way to connect Indigo to your Life360.com family t
 Life360 is a mobile application referred to as a "family-oriented private social network". The app is a social network for families and differentiates itself in this way as it is not based around peer groups or professional networks such as Find My Friends and LinkedIn. It allows users to share locations, group messages, and call for roadside assistance. It has four main features: location sharing, circles, places, and premium.
 
 ###### Location sharing
-The main feature of the app is location sharing. Users can open the app and see where other members are instantly. Users can choose to share or not their location with any particular circle at any particular time.[19]
+The main feature of the app is location sharing. Users can open the app and see where other members are instantly. Users can choose to share or not their location with any particular circle at any particular time.
 
 ###### Circles
 Circles allows users to create separate groups within the app, e.g. "caregivers," "extended family," and "John's baseball team." Users' location is only visible to those who are also in the circle, and members in "caregivers" cannot see the location of users in "extended family," unless they are also in that circle.
