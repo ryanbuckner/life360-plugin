@@ -16,7 +16,7 @@ import datetime
 try:
 	from geopy.geocoders import Nominatim
 except: 
-	self.errorLog("Geopy python library is not installed. Closest address location will be black. Install with 'pip install geopy' ")
+	self.errorLog("Geopy python library is not installed. Closest address location will be blank. Install with 'pip install geopy' ")
 	pass
 
 

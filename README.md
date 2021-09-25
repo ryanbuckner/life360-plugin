@@ -13,19 +13,25 @@ The main feature of the app is location sharing. Users can open the app and see 
 Circles allows users to create separate groups within the app, e.g. "caregivers," "extended family," and "John's baseball team." Users' location is only visible to those who are also in the circle, and members in "caregivers" cannot see the location of users in "extended family," unless they are also in that circle.
 
 ###### Places
-Life360 allows users to create geofences that alert them when another enters or leaves another location.
+Places are a great way to know when your loved ones are leaving work or just arrived at school. Places are areas you can define so you are alerted when a Circle member enters or leaves a location. Some Places you might want to set up are work, home, and school. Free plans can set up two Places. To set up more Places, upgrade to a Premium plan.
 
 ###### Premium
 Life360 operates as a freemium app, and users can pay for extra features. These extra features include: stolen phone insurance, access to a live advisor 24/7, unlimited creation of "Places," and emergency roadside assistance (known as 'Driver Protect').
 
 ###### Bubbles
-Bubbles allows a user to set a radius of between 1 and 25 miles and a set time frame of 1 to 6 hours. This means you won't be able to see where people are in the Bubbles however safety features and messaging features remain active.
+Life360 Bubbles is a new way to customize Location Sharing for your Circle. Bubbles is an optional feature and not a default setting. After a temporary Bubble is created, it shares only your approximate location while all safety and messaging features remain on. If a car crash or emergency is detected, Bubbles will automatically burst.
+
+To stay connected with your family during Bubble time, you can message to request a Check-In for their exact location, or use the Message feature to communicate. If you are concerned about safety, you can burst a Bubble at any time.
+
+More information can be found about Life360 [here](https://www.life360.com/support/popular-questions/)
 
 ### The Life360 Plugin
 
 The plugin is my first attempt at an Indigo plugin, based on a script I wrote to update variables in Indigo. The Life360 api example was leveraged from the work done by [harperreed](https://github.com/harperreed/life360-python) 
 
 This alpha version has not been testedby any other users but myself.  It is my first plugin so I look forward to the community adding more features and error handling before it's place in the Indigodomo Plugin Store. More informaton will be listed [on the GitHub Wiki](https://github.com/ryanbuckner/life360-plugin/wiki)
+
+This plugin is not endorsed or associated with Life360 
 
 ###### The plugin currently supports:
 
