@@ -224,12 +224,10 @@ class Plugin(indigo.PluginBase):
 	def toggleDebugging(self):
 		if self.debug:
 			self.debug = False
-			indigo.server.log("Turning off debug logging")
 			self.logger.info(u"Turning off debug logging (Toggle Debugging menu item chosen).")
 			self.pluginPrefs['showDebugInfo'] = False
 		else:
 			self.debug = True
-			indigo.server.log("Turning on debug logging")
 			self.pluginPrefs['showDebugInfo'] = True
 			self.logger.debug(u"Turning on debug logging (Toggle Debugging menu item chosen).")
 
