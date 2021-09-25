@@ -16,7 +16,7 @@ import datetime
 try:
 	from geopy.geocoders import Nominatim
 except: 
-	self.errorLog("Geopy python library is not installed. Closest address location will be blank. Install with 'pip install geopy' ")
+	self.logger.debug("Geopy python library is not installed. Closest address location will be blank. Install with 'pip install geopy' ")
 	pass
 
 
@@ -60,7 +60,7 @@ class Plugin(indigo.PluginBase):
 
 	########################################
 	def deviceStartComm(self, device):
-		self.debugLog("Starting device: " + device.name)
+		self.logger.debug("Starting device: " + device.name)
 		device.stateListOrDisplayStateIdChanged()
 
 		if device.id not in self.deviceList:
@@ -69,19 +69,19 @@ class Plugin(indigo.PluginBase):
 
 	########################################
 	def deviceStopComm(self, device):
-		self.debugLog("Stopping device: " + device.name)
+		self.logger.debug("Stopping device: " + device.name)
 		if device.id in self.deviceList:
 			self.deviceList.remove(device.id)
 
 	########################################
 	def runConcurrentThread(self):
-		self.debugLog("Starting concurrent thread")
+		self.logger.debug("Starting concurrent thread")
 		try:
 			pollingFreq = int(self.pluginPrefs['refresh_frequency']) * 60
 		except:
 			pollingFreq = 300
 
-		self.debugLog("Current polling frequency is: " + str(pollingFreq) + " seconds")
+		self.logger.debug("Current polling frequency is: " + str(pollingFreq) + " seconds")
 
 		# Refresh device states immediately after restarting the Plugin
 		iterationcount = 1
@@ -102,7 +102,7 @@ class Plugin(indigo.PluginBase):
 
 	########################################
 	def update(self, device):
-		self.debugLog(device.name)
+		self.logger.debug(device.name)
 		# # device.stateListOrDisplayStateIdChanged()
 		return
 
@@ -117,7 +117,7 @@ class Plugin(indigo.PluginBase):
 	# assigns the device.address to the value of the member.id
 	def menuChanged(self, valuesDict = None, typeId = None, devId = None):
 		self.create_member_list()
-		self.debugLog(self.member_list)
+		self.logger.debug(self.member_list)
 		if valuesDict['membername'] in self.member_list:
 			tempName = valuesDict['membername']
 			valuesDict['address'] = self.member_list[tempName] # m['id']
@@ -129,7 +129,7 @@ class Plugin(indigo.PluginBase):
 	def write_json_to_log(self):
 		if (len(self.life360data) == 0):
 			self.get_new_life360json()
-		self.debugLog(self.life360data)
+		self.logger.debug(self.life360data)
 		if (not self.debug):
 			indigo.server.log("Life360 data has been written to the debugLog. If you did not see it you may need to enable debugging in the Plugin Config UI")
 		return
@@ -140,38 +140,38 @@ class Plugin(indigo.PluginBase):
 	########################################
 	def validatePrefsConfigUi(self, valuesDict):
 		if int(valuesDict['refresh_frequency']) < 3:
-			self.errorLog("Invalid entry for Refresh Frequency - must be greater than 2")
+			self.logger.error("Invalid entry for Refresh Frequency - must be greater than 2")
 			errorsDict = indigo.Dict()
 			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 2"
 			return (False, valuesDict, errorsDict)
 
 		if (not valuesDict['life360_username']):
-			self.errorLog("Invalid entry for Life360 username - cannot be empty")
+			self.logger.error("Invalid entry for Life360 username - cannot be empty")
 			errorsDict = indigo.Dict()
 			errorsDict['life360_username'] = "Invalid entry for Life360 username - cannot be empty"
 			return (False, valuesDict, errorsDict)
 
 		if (valuesDict['life360_username'].find('@') == -1):
-			self.errorLog("Invalid entry for Life360 username - must be a valid email address")
+			self.logger.error("Invalid entry for Life360 username - must be a valid email address")
 			errorsDict = indigo.Dict()
 			errorsDict['life360_username'] = "Invalid entry for Life360 username - must be a valid email address"
 			return (False, valuesDict, errorsDict)
 
 		if (valuesDict['life360_username'].find('.') == -1):
-			self.errorLog("Invalid entry for Life360 username - must be a valid email address")
+			self.logger.error("Invalid entry for Life360 username - must be a valid email address")
 			errorsDict = indigo.Dict()
 			errorsDict['life360_username'] = "Invalid entry for Life360 username - must be a valid email address"
 			return (False, valuesDict, errorsDict)
 
 		if (not valuesDict['life360_password']):
-			self.errorLog("Invalid entry for Life360 password - cannot be empty")
+			self.logger.error("Invalid entry for Life360 password - cannot be empty")
 			errorsDict = indigo.Dict()
 			errorsDict['life360_password'] = "Invalid entry for Life360 password - cannot be empty"
 			return (False, valuesDict, errorsDict)
 
 		auth_result = self.validate_api_auth(valuesDict['life360_username'], valuesDict['life360_password'], valuesDict['authorizationtoken'])
 		if (not auth_result):
-			self.errorLog("Life360 API Authentication failed - check your username and password")
+			self.logger.error("Life360 API Authentication failed - check your username and password")
 			errorsDict = indigo.Dict()
 			errorsDict['life360_password'] = "Life360 API Authentication failed - check your username and password"
 			return (False, valuesDict, errorsDict)
@@ -183,13 +183,13 @@ class Plugin(indigo.PluginBase):
 		api = life360(authorization_token=authorization_token, username=username, password=password)
 		try:
 			if api.authenticate():
-				self.debugLog("Validation of API was successful")
+				self.logger.debug("Validation of API was successful")
 				return True
 			else:
-				self.errorLog("Validation of API FAILED")
+				self.logger.debug("Validation of API FAILED")
 				return False
 		except Exception as e:
-			self.errorLog("Error authenticating: " + e.msg)
+			self.logger.debug("Error authenticating: " + e.msg)
 			return False
 
 
@@ -209,7 +209,7 @@ class Plugin(indigo.PluginBase):
 			self.life360data = circle
 			self.create_member_list()
 		else:
-			self.errorLog("Error retrieving new Life360 JSON")
+			self.logger.error("Error retrieving new Life360 JSON")
 		return
 
 
@@ -223,15 +223,15 @@ class Plugin(indigo.PluginBase):
 
 	def toggleDebugging(self):
 		if self.debug:
+			self.debug = False
 			indigo.server.log("Turning off debug logging")
-			self.debugLog(u"Turning off debug logging (Toggle Debugging menu item chosen).")
+			self.logger.info(u"Turning off debug logging (Toggle Debugging menu item chosen).")
 			self.pluginPrefs['showDebugInfo'] = False
 		else:
+			self.debug = True
 			indigo.server.log("Turning on debug logging")
 			self.pluginPrefs['showDebugInfo'] = True
-			self.debugLog(u"Turning on debug logging (Toggle Debugging menu item chosen).")
-			# Turn on/off for the Indigo log level.
-		self.debug = not self.debug
+			self.logger.debug(u"Turning on debug logging (Toggle Debugging menu item chosen).")
 
 
 	############################
@@ -248,7 +248,7 @@ class Plugin(indigo.PluginBase):
 	def updatedevicestates(self, device):
 		device_states = []
 		member_device = device.pluginProps['membername']
-		self.debugLog("Updating device: " + member_device)
+		self.logger.debug("Updating device: " + member_device)
 		try: 
 			geocoder = Nominatim(user_agent='life360')
 		except:
@@ -280,7 +280,7 @@ class Plugin(indigo.PluginBase):
 					geoloc = geocoder.reverse((loclat, loclng))
 					currentaddress = geoloc
 				except Exception as g:
-					self.debugLog(u"Geocoder error")
+					self.logger.debug(u"Geocoder error")
 					currentaddress = "unknown - geocoder error"
 
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
