@@ -20,10 +20,9 @@
 		<Description></Description>
 	</Field>
 
-	<Field id="simpleseparator3" type="separator">
+	<Field id="simpleseparator1" type="separator"></Field>
 
-	</Field>
-		<Field id="showDebugInfo" type="checkbox">
+	<Field id="showDebugInfo" type="checkbox">
 		<Label>Enable debugging:</Label>
 		<Description>(recommended to turn off after specific debug)</Description>
 	</Field>

@@ -16,7 +16,7 @@ import datetime
 try:
 	from geopy.geocoders import Nominatim
 except: 
-	self.logger.debug("Geopy python library is not installed. Closest address location will be blank. Install with 'pip install geopy' ")
+	self.logger.debug("Geopy python library is not found. Try reinstalling the Plugin")
 	pass
 
 
@@ -57,6 +57,7 @@ class Plugin(indigo.PluginBase):
 
 		self.life360data = {}
 		self.member_list = {}
+
 
 	########################################
 	def deviceStartComm(self, device):
@@ -176,6 +177,9 @@ class Plugin(indigo.PluginBase):
 			errorsDict['life360_password'] = "Life360 API Authentication failed - check your username and password"
 			return (False, valuesDict, errorsDict)
 
+		self.debug = valuesDict['showDebugInfo']
+		self.logger.debug("Debug set to: " + str(self.debug))
+
 		return (True, valuesDict)
 
 
@@ -246,12 +250,13 @@ class Plugin(indigo.PluginBase):
 	def updatedevicestates(self, device):
 		device_states = []
 		member_device = device.pluginProps['membername']
-		self.logger.debug("Updating device: " + member_device)
+		#self.logger.debug("Updating device: " + member_device)
 		try: 
 			geocoder = Nominatim(user_agent='life360')
 		except:
-			self.errorLog("Error instantiating geocoder object")
-			pass
+			self.logger.error("Error instantiating geocoder object")
+		pass
+
 		for m in self.life360data['members']:
 			if m['firstName'] == member_device:
 				x = datetime.datetime.now()
@@ -271,6 +276,8 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
 				device_states.append({'key': 'member_is_driving','value': m['location']['isDriving']})
 				device_states.append({'key': 'last_api_update','value': str(cur_date_time)})
+				
+
 				try: 
 					# get address from lat long information 
 					loclat = float(m['location']['latitude'])
@@ -279,7 +286,7 @@ class Plugin(indigo.PluginBase):
 					currentaddress = geoloc
 				except Exception as g:
 					self.logger.debug(u"Geocoder error")
-					currentaddress = "unknown - geocoder error"
+					currentaddress = "-geocoder error-"
 
 				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
 
