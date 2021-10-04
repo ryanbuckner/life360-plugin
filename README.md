@@ -80,4 +80,8 @@ I am not an expert on Life360. I have not yet had the Indigo community test this
 
 As this is the first version of my first plugin, so usage is at your own risk ! By using this version you are joining the testing team, thanks for the help.   I would love to hear your feedback and thoughts.
 
+### Troubleshooting:
+
+If someone changes their name in Life360, you will have to go into their device and reselect them from the dropdown for that device to continue receiving updates. 
+
 
