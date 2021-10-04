@@ -103,7 +103,7 @@ class Plugin(indigo.PluginBase):
 
 	########################################
 	def update(self, device):
-		self.logger.debug(device.name)
+		#self.logger.debug(device.name)
 		# # device.stateListOrDisplayStateIdChanged()
 		return
 
@@ -140,7 +140,7 @@ class Plugin(indigo.PluginBase):
 	# UI Validate, Plugin Preferences
 	########################################
 	def validatePrefsConfigUi(self, valuesDict):
-		if int(valuesDict['refresh_frequency']) < 3:
+		if int(valuesDict['refresh_frequency']) < 1:
 			self.logger.error("Invalid entry for Refresh Frequency - must be greater than 2")
 			errorsDict = indigo.Dict()
 			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 2"
@@ -250,7 +250,8 @@ class Plugin(indigo.PluginBase):
 	def updatedevicestates(self, device):
 		device_states = []
 		member_device = device.pluginProps['membername']
-		#self.logger.debug("Updating device: " + member_device)
+		member_device_address = device.address
+		self.logger.debug("Updating device: " + member_device)
 		try: 
 			geocoder = Nominatim(user_agent='life360')
 		except:
@@ -259,6 +260,7 @@ class Plugin(indigo.PluginBase):
 
 		for m in self.life360data['members']:
 			if m['firstName'] == member_device:
+			#if m['id'] == member_device_address:
 				x = datetime.datetime.now()
 				cur_date_time = x.strftime("%m/%d/%Y %I:%M %p")
 
@@ -275,6 +277,9 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_lat','value': float(m['location']['latitude'])})
 				device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
 				device_states.append({'key': 'member_is_driving','value': m['location']['isDriving']})
+				device_states.append({'key': 'member_speed','value': float(m['location']['speed'])})
+				device_states.append({'key': 'member_in_transit','value': m['location']['inTransit']})
+				device_states.append({'key': 'member_driveSDKStatus','value': m['location']['driveSDKStatus']})
 				device_states.append({'key': 'last_api_update','value': str(cur_date_time)})
 				
 

@@ -95,6 +95,24 @@
 			<TriggerLabelPrefix>Member Is Driving Changed to</TriggerLabelPrefix>
 			<ControlPageLabel>Member Is Driving</ControlPageLabel>
 		</State>
+		<State id="member_speed">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Member Speed</TriggerLabel>
+			<TriggerLabelPrefix>Member Speed Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member Speed</ControlPageLabel>
+		</State>
+		<State id="member_in_transit">
+			<ValueType>Boolean</ValueType>
+			<TriggerLabel>Member In Transit</TriggerLabel>
+			<TriggerLabelPrefix>Member In Transit Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member In Transit</ControlPageLabel>
+		</State>
+		<State id="member_driveSDKStatus">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Member driveSDKStatus</TriggerLabel>
+			<TriggerLabelPrefix>Member driveSDKStatus Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member driveSDKStatus</ControlPageLabel>
+		</State>
 		<State id="member_location_since_datetime">
 			<ValueType>String</ValueType>
 			<TriggerLabel>Member Location Since Timestamp</TriggerLabel>
