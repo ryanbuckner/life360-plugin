@@ -259,8 +259,9 @@ class Plugin(indigo.PluginBase):
 		pass
 
 		for m in self.life360data['members']:
-			if m['firstName'] == member_device:
-			#if m['id'] == member_device_address:
+			if m['id'] == member_device_address:
+				#self.logger.debug(m['id'] + ' = ' + member_device_address)
+			#if m['firstName'] == member_device:
 				x = datetime.datetime.now()
 				cur_date_time = x.strftime("%m/%d/%Y %I:%M %p")
 
