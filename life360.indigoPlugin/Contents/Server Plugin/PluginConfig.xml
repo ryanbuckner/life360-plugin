@@ -3,7 +3,7 @@
 
 
 	<Field id="refresh_frequency" type="textfield" defaultValue="5">
-		<Label>Enter API Refresh Frequency in Minutes:</Label>
+		<Label>Enter API Refresh Frequency in Seconds:</Label>
 	</Field>
 	<Field id="life360_username" type="textfield" defaultValue="">
 		<Label>Enter life30 username:</Label>

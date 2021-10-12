@@ -49,7 +49,7 @@ class Plugin(indigo.PluginBase):
 		self.logger.info(u"{0:<30} {1}".format("Plugin name:", pluginDisplayName))
 		self.logger.info(u"{0:<30} {1}".format("Plugin version:", pluginVersion))
 		self.logger.info(u"{0:<30} {1}".format("Plugin ID:", pluginId))
-		self.logger.info(u"{0:<30} {1}".format("Refresh Frequency:", str(self.refresh_frequency) + " minutes"))
+		self.logger.info(u"{0:<30} {1}".format("Refresh Frequency:", str(self.refresh_frequency) + " seconds"))
 		self.logger.info(u"{0:<30} {1}".format("Indigo version:", indigo.server.version))
 		self.logger.info(u"{0:<30} {1}".format("Python version:", sys.version.replace('\n', '')))
 		self.logger.info(u"{0:<30} {1}".format("Python Directory:", sys.prefix.replace('\n', '')))
@@ -78,9 +78,9 @@ class Plugin(indigo.PluginBase):
 	def runConcurrentThread(self):
 		self.logger.debug("Starting concurrent thread")
 		try:
-			pollingFreq = int(self.pluginPrefs['refresh_frequency']) * 60
+			pollingFreq = int(self.pluginPrefs['refresh_frequency']) * 1
 		except:
-			pollingFreq = 300
+			pollingFreq = 60
 
 		self.logger.debug("Current polling frequency is: " + str(pollingFreq) + " seconds")
 
@@ -140,10 +140,10 @@ class Plugin(indigo.PluginBase):
 	# UI Validate, Plugin Preferences
 	########################################
 	def validatePrefsConfigUi(self, valuesDict):
-		if int(valuesDict['refresh_frequency']) < 1:
-			self.logger.error("Invalid entry for Refresh Frequency - must be greater than 2")
+		if int(valuesDict['refresh_frequency']) < 15:
+			self.logger.error("Invalid entry for Refresh Frequency - must be greater than 15")
 			errorsDict = indigo.Dict()
-			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 2"
+			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 15"
 			return (False, valuesDict, errorsDict)
 
 		if (not valuesDict['life360_username']):
@@ -247,6 +247,20 @@ class Plugin(indigo.PluginBase):
 		return
 
 
+	def isDriving(self, speed_int):
+		if (round(speed_int) > 1):
+			return 1
+		else:
+			return 0
+
+
+	def mphSpeed(self, speed_int):
+		if speed_int < 2:
+			return str(speed_int)
+		else: 
+			return str(round(2.2 * speed_int))
+
+
 	def updatedevicestates(self, device):
 		device_states = []
 		member_device = device.pluginProps['membername']
@@ -265,6 +279,11 @@ class Plugin(indigo.PluginBase):
 				x = datetime.datetime.now()
 				cur_date_time = x.strftime("%m/%d/%Y %I:%M %p")
 
+				# the raw speed from Life360 is exstiated to be MPH/2.2
+				adjustedSpeed = self.mphSpeed(float(m['location']['speed']))
+				# the raw Life360 isDriving boolean always comes back 0. Let's use speed to determine isDriving for Indigo
+				adjustedDriving = self.isDriving(float(adjustedSpeed))
+
 				device_states.append({'key': 'member_id','value': m['id'] })
 				device_states.append({'key': 'member_avatar','value': m['avatar'] })
 				device_states.append({'key': 'member_first_name','value': m['firstName'] })
@@ -277,8 +296,8 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_battery_charging','value': m['location']['charge']})
 				device_states.append({'key': 'member_lat','value': float(m['location']['latitude'])})
 				device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
-				device_states.append({'key': 'member_is_driving','value': m['location']['isDriving']})
-				device_states.append({'key': 'member_speed','value': float(m['location']['speed'])})
+				device_states.append({'key': 'member_is_driving','value': adjustedDriving })
+				device_states.append({'key': 'member_speed','value': adjustedSpeed })
 				device_states.append({'key': 'member_in_transit','value': m['location']['inTransit']})
 				device_states.append({'key': 'member_driveSDKStatus','value': m['location']['driveSDKStatus']})
 				device_states.append({'key': 'last_api_update','value': str(cur_date_time)})

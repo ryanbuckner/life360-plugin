@@ -51,6 +51,8 @@ This plugin is not endorsed or associated with Life360
   - Current Geofence
   - Closest known address 
   - Wifi connected or not
+  - Is Driving (boolean determined by speed)
+  - Speed (raw Life360 speed * 2.2)
   - Location Since Timestamp
   - Last API update 
 
@@ -63,7 +65,7 @@ Download the Life360.indigoPlugin file and double click it
   - Username: your life360 username (email address). Any account holder in the Circle can use their account. If you don't have a username or password, you can initiate a password change in the app 
   - Password: your life360 password
   - Authentication Token: Leave this value alone
-  - Refresh Rate: This is the time (in minutes) between API calls to refresh device states. It's recommended to keep this rate at 3 minutes or more
+  - Refresh Rate: This is the time (in seonds) between API calls to refresh device states. It's recommended to keep this rate at 15 seconds or more
 
 The Plugin Config Dialog should not close unless your username and password are authenticated.  Check the Event Log for any errors. 
 
@@ -82,6 +84,9 @@ As this is the first version of my first plugin, so usage is at your own risk ! 
 
 ### Troubleshooting:
 
-If someone changes their name in Life360, you will have to go into their device and reselect them from the dropdown for that device to continue receiving updates. 
+- If someone changes their name in Life360, you will have to go into their device and reselect them from the dropdown if you make any other changes to the device.
+- member_is_driving is a derived boolean based on the Life360 speed for that member. The raw isDriving status is always returned as 0, so it's ignored
+- The Life360 raw speed is a number that appears to be the actual speed in MPH diveded by 2.2. This plugin attemps to correct that, but it's an estimate. -1 or 0 means not moving fast enough to register
+
 
 
