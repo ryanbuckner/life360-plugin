@@ -50,7 +50,7 @@ This plugin is not endorsed or associated with Life360
   - Longitude
   - Current Geofence
   - Closest known address 
-  - Wifi connected or not
+  - Wifi turn on or not
   - Is Driving (boolean determined by speed)
   - Speed (raw Life360 speed * 2.2)
   - Location Since Timestamp
