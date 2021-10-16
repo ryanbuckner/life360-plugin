@@ -1,9 +1,11 @@
 <img src="https://s2-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/245/300/resized/life360-horizontal-logo-trimmed.png?1558125703" >
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://mit-license.org)
-[![Platform](https://img.shields.io/badge/Platform-Indigo-blueviolet)](https://www.indigodomo.com/) 
-[![Language](https://img.shields.io/badge/Language-python%202.7-orange)](https://www.python.org/)
-[![Requirements](https://img.shields.io/badge/Requirements-Indigo%20v7%2B-green)](https://www.indigodomo.com/downloads.html)
+[![Platform](https://img.shields.io/badge/platform-Indigo-blueviolet)](https://www.indigodomo.com/) 
+[![Language](https://img.shields.io/badge/language-python%202.7-orange)](https://www.python.org/)
+[![Requirements](https://img.shields.io/badge/requirements-Indigo%20v7%2B-green)](https://www.indigodomo.com/downloads.html)
+![Releases](https://img.shields.io/github/release-date/ryanbuckner/life360-plugin?color=red&label=latest%20release)
+
 
 
 # Life360 Plugin for Indigo Domotics Home Automation 
