@@ -1,4 +1,12 @@
-# life360-indigo-plugin
+<img src="https://s2-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/245/300/resized/life360-horizontal-logo-trimmed.png?1558125703" >
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://mit-license.org)
+[![Platform](https://img.shields.io/badge/Platform-Indigo-blueviolet)](https://www.indigodomo.com/) 
+[![Language](https://img.shields.io/badge/Language-python%202.7-orange)](https://www.python.org/)
+[![Requirements](https://img.shields.io/badge/Requirements-Indigo%20v7%2B-green)](https://www.indigodomo.com/downloads.html)
+
+
+# Life360 Plugin for Indigo Domotics Home Automation 
 ## life360-indigo-plugin
 This Indigo Plugin provides a way to connect Indigo to your Life360.com family tracking information. This plugin is only supported for [Indigo Domotics Software ](http://www.indigodomo.com)
 
