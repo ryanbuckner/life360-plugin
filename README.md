@@ -1,4 +1,13 @@
-# life360-indigo-plugin
+<img src="https://s2-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/245/300/resized/life360-horizontal-logo-trimmed.png?1558125703" >
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://mit-license.org)
+[![Platform](https://img.shields.io/badge/Platform-Indigo-blueviolet)](https://www.indigodomo.com/) 
+[![Language](https://img.shields.io/badge/Language-python%202.7-orange)](https://www.python.org/)
+[![Requirements](https://img.shields.io/badge/Requirements-Indigo%20v7%2B-green)](https://www.indigodomo.com/downloads.html)
+![Releases](https://img.shields.io/github/release-date/ryanbuckner/life360-plugin?color=red&label=latest%20release)
+
+
+# Life360 Plugin for Indigo Domotics Home Automation 
 ## life360-indigo-plugin
 This Indigo Plugin provides a way to connect Indigo to your Life360.com family tracking information. This plugin is only supported for [Indigo Domotics Software ](http://www.indigodomo.com)
 
@@ -87,6 +96,7 @@ As this is the first version of my first plugin, so usage is at your own risk ! 
 - If someone changes their name in Life360, you will have to go into their device and reselect them from the dropdown if you make any other changes to the device.
 - member_is_driving is now a derived boolean based on the Life360 speed for that member. The raw isDriving status is always returned as 0, so it's ignored
 - The Life360 raw speed is a number that appears to be the actual speed in MPH divided by 2.2. This plugin attempts to correct that, but it's an estimate. -1 or 0 means not moving fast enough to register
+- The plugin will skip updates for devices mapped to someone who has disabled or paused location sharing 
 
 
 
