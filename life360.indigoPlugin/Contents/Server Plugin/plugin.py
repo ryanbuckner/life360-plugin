@@ -291,7 +291,6 @@ class Plugin(indigo.PluginBase):
 				device_states.append({'key': 'member_phone_num','value': m['loginPhone']})
 				device_states.append({'key': 'member_email','value': m['loginEmail']})
 				device_states.append({'key': 'last_api_update','value': str(cur_date_time)})
-				
 				device_states.append({'key': 'member_360_location','value': m['location']['name']})
 				device_states.append({'key': 'member_battery','value': m['location']['battery']})
 				device_states.append({'key': 'member_wifi','value': m['location']['wifiState']})

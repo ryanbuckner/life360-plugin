@@ -96,7 +96,7 @@ As this is the first version of my first plugin, so usage is at your own risk ! 
 - If someone changes their name in Life360, you will have to go into their device and reselect them from the dropdown if you make any other changes to the device.
 - member_is_driving is now a derived boolean based on the Life360 speed for that member. The raw isDriving status is always returned as 0, so it's ignored
 - The Life360 raw speed is a number that appears to be the actual speed in MPH divided by 2.2. This plugin attempts to correct that, but it's an estimate. -1 or 0 means not moving fast enough to register
-- The plugin will skip updates for devices mapped to someone who has disabled or paused location sharing
+- The plugin will skip all updates for devices mapped to someone who has disabled or paused location sharing 
 
 
 
