@@ -12,6 +12,7 @@
                 <List class="self" method="get_member_list" dynamicReload="true"/>
                 <CallbackMethod>menuChanged</CallbackMethod>
         </Field>
+        <Field id="SupportsBatteryLevel" type="textfield" defaultValue="true" hidden="true" />
         <Field id="SupportsOnState" type="checkbox" defaultValue="false" hidden="true" />
 		<Field id="SupportsSensorValue" type="checkbox" defaultValue="true" hidden="true" />
 		<Field id="SupportsStatusRequest" type="checkbox" defaultValue="true" hidden="true" />
@@ -122,6 +123,12 @@
 			<ValueType>String</ValueType>
 			<TriggerLabel>Last Life360 API Update</TriggerLabel>
 			<ControlPageLabel>Last Life360 API Update</ControlPageLabel>
+		</State>
+		<State id="batteryLevel">
+			<ValueType>Number</ValueType>
+			<TriggerLabel>Member Battery Level</TriggerLabel>
+			<TriggerLabelPrefix>Battery Level Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member Battery Level</ControlPageLabel>
 		</State>
 
 	</States>

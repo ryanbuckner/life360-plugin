@@ -207,11 +207,15 @@ class Plugin(indigo.PluginBase):
 	def get_new_life360json(self):
 		api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
 		if api.authenticate():
-			circles = api.get_circles()
-			id = circles[0]['id']
-			circle = api.get_circle(id)
-			self.life360data = circle
-			self.create_member_list()
+			try:
+				self.logger.debug("Attepting to get list of circles")
+				circles = api.get_circles()
+				id = circles[0]['id']
+				circle = api.get_circle(id)
+				self.life360data = circle
+				self.create_member_list()
+			except Exception as e:
+				self.logger.error(e.message)
 		else:
 			self.logger.error("Error retrieving new Life360 JSON")
 		return
@@ -272,62 +276,67 @@ class Plugin(indigo.PluginBase):
 			self.logger.error("Error instantiating geocoder object")
 		pass
 
-		for m in self.life360data['members']:
-			if ((m['id'] == member_device_address) and (m['location'])):
-			#if m['firstName'] == member_device:
-				x = datetime.datetime.now()
-				cur_date_time = x.strftime("%m/%d/%Y %I:%M %p")
+		if self.life360data['members']:
+			for m in self.life360data['members']:
+				if ((m['id'] == member_device_address) and (m['location'])):
+					x = datetime.datetime.now()
+					cur_date_time = x.strftime("%m/%d/%Y %I:%M %p")
 
-				# the raw speed from Life360 is exstimated to be MPH/2.2
-				adjustedSpeed = self.mphSpeed(float(m['location']['speed']))
+					# the raw speed from Life360 is exstimated to be MPH/2.2
+					adjustedSpeed = self.mphSpeed(float(m['location']['speed']))
 
-				# the raw Life360 isDriving boolean always comes back 0. Let's use speed to determine isDriving for Indigo
-				adjustedDriving = self.isDriving(float(adjustedSpeed))
+					# the raw Life360 isDriving boolean always comes back 0. Let's use speed to determine isDriving for Indigo
+					adjustedDriving = self.isDriving(float(adjustedSpeed))
 
-				device_states.append({'key': 'member_id','value': m['id'] })
-				device_states.append({'key': 'member_avatar','value': m['avatar'] })
-				device_states.append({'key': 'member_first_name','value': m['firstName'] })
-				device_states.append({'key': 'member_last_name','value': m['lastName'] })
-				device_states.append({'key': 'member_phone_num','value': m['loginPhone']})
-				device_states.append({'key': 'member_email','value': m['loginEmail']})
-				device_states.append({'key': 'last_api_update','value': str(cur_date_time)})
-				device_states.append({'key': 'member_360_location','value': m['location']['name']})
-				device_states.append({'key': 'member_battery','value': m['location']['battery']})
-				device_states.append({'key': 'member_wifi','value': m['location']['wifiState']})
-				device_states.append({'key': 'member_battery_charging','value': m['location']['charge']})
-				device_states.append({'key': 'member_in_transit','value': m['location']['inTransit']})
-				device_states.append({'key': 'member_driveSDKStatus','value': m['location']['driveSDKStatus']})
-				device_states.append({'key': 'member_lat','value': float(m['location']['latitude'])})
-				device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
-				device_states.append({'key': 'member_is_driving','value': adjustedDriving })
-				device_states.append({'key': 'member_speed','value': adjustedSpeed })
-				
+					device_states.append({'key': 'member_id','value': m['id'] })
+					device_states.append({'key': 'member_avatar','value': m['avatar'] })
+					device_states.append({'key': 'member_first_name','value': m['firstName'] })
+					device_states.append({'key': 'member_last_name','value': m['lastName'] })
+					device_states.append({'key': 'member_phone_num','value': m['loginPhone']})
+					device_states.append({'key': 'member_email','value': m['loginEmail']})
+					device_states.append({'key': 'last_api_update','value': str(cur_date_time)})
+					device_states.append({'key': 'member_360_location','value': m['location']['name']})
+					device_states.append({'key': 'member_battery','value': m['location']['battery']})
+					device_states.append({'key': 'batteryLevel','value': int(float(m['location']['battery']))})
+					device_states.append({'key': 'member_wifi','value': m['location']['wifiState']})
+					device_states.append({'key': 'member_battery_charging','value': m['location']['charge']})
+					device_states.append({'key': 'member_in_transit','value': m['location']['inTransit']})
+					device_states.append({'key': 'member_driveSDKStatus','value': m['location']['driveSDKStatus']})
+					device_states.append({'key': 'member_lat','value': float(m['location']['latitude'])})
+					device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
+					device_states.append({'key': 'member_is_driving','value': adjustedDriving })
+					device_states.append({'key': 'member_speed','value': adjustedSpeed })
+					
 
-				try: 
-					# get address from lat long information 
-					loclat = float(m['location']['latitude'])
-					loclng = float(m['location']['longitude'])
-					geoloc = geocoder.reverse((loclat, loclng))
-					currentaddress = geoloc
-				except Exception as g:
-					self.logger.debug(u"Geocoder error")
-					currentaddress = "-geocoder error-"
+					try: 
+						# get address from lat long information 
+						loclat = float(m['location']['latitude'])
+						loclng = float(m['location']['longitude'])
+						geoloc = geocoder.reverse((loclat, loclng))
+						currentaddress = geoloc
+					except Exception as g:
+						self.logger.debug(u"Geocoder error")
+						currentaddress = "-geocoder error-"
 
-				device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
+					device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
 
-				if (m['location']['since']):
-					sincedate = datetime.datetime.fromtimestamp(m['location']['since'])
-					sincedatestr  = sincedate.strftime("%m/%d/%Y %I:%M %p")
-					device_states.append({'key': 'member_location_since_datetime','value': sincedatestr})
-				else: 
-					device_states.append({'key': 'member_location_since_datetime','value': ''})
+					if (m['location']['since']):
+						sincedate = datetime.datetime.fromtimestamp(m['location']['since'])
+						sincedatestr  = sincedate.strftime("%m/%d/%Y %I:%M %p")
+						device_states.append({'key': 'member_location_since_datetime','value': sincedatestr})
+					else: 
+						device_states.append({'key': 'member_location_since_datetime','value': ''})
 
-				if (m['location']['name'] == "Home"):
-					device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
-				else:
-					device.updateStateImageOnServer(indigo.kStateImageSel.None)
+					if (m['location']['name'] == "Home"):
+						device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
+					else:
+						device.updateStateImageOnServer(indigo.kStateImageSel.None)
+		
+			device.updateStatesOnServer(device_states)
 
-		device.updateStatesOnServer(device_states)
+		else:
+			pass
+
 		return
 
 
