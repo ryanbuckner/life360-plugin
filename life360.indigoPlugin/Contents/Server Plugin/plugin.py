@@ -39,10 +39,15 @@ class Plugin(indigo.PluginBase):
 		super(Plugin, self).__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 		self.debug = pluginPrefs.get("showDebugInfo", False)
 		self.deviceList = []
-		self.authorization_token = self.pluginPrefs['authorizationtoken']
-		self.username = self.pluginPrefs['life360_username']
-		self.password = self.pluginPrefs['life360_password']
-		self.refresh_frequency = self.pluginPrefs['refresh_frequency']
+
+		try:
+			self.authorization_token = self.pluginPrefs.get('authorizationtoken', 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg')
+			self.username = self.pluginPrefs.get('life360_username', None)
+			self.password = self.pluginPrefs.get('life360_password', None)
+			self.refresh_frequency = self.pluginPrefs.get('refresh_frequency', 30)
+			self.logger.debug("Success retriving preferences from Plugin config")
+		except:
+			self.logger.error("Error retrieving Plugin preferences. Please use Configure to set")
 
 		self.logger.info(u"")
 		self.logger.info(u"{0:=^130}".format("Starting Life360 Plugin Engine"))
@@ -217,7 +222,7 @@ class Plugin(indigo.PluginBase):
 			except Exception as e:
 				self.logger.error(e.message)
 		else:
-			self.logger.error("Error retrieving new Life360 JSON")
+			self.logger.error("Error retrieving new Life360 JSON, Make sure you have the correct credentials in Plugin Config")
 		return
 
 
