@@ -339,8 +339,8 @@ class Plugin(indigo.PluginBase):
 					if (m['location']['name'] == "Home"):
 						device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
 					else:
-						device.updateStateImageOnServer(indigo.kStateImageSel.None)
-						# getattr(indigo.kStateImageSel, "NoImage", getattr(indigo.kStateImageSel, "None", ""))
+						#device.updateStateImageOnServer(indigo.kStateImageSel.None)
+						getattr(indigo.kStateImageSel, "NoImage", getattr(indigo.kStateImageSel, "None", ""))
 		
 			device.updateStatesOnServer(device_states)
 
