@@ -323,7 +323,11 @@ class Plugin(indigo.PluginBase):
 						self.logger.debug(u"Geocoder error")
 						currentaddress = "-geocoder error-"
 
-					device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
+					try:
+						device_states.append({'key': 'member_closest_address','value': str(currentaddress) })
+					except:
+						device_states.append({'key': 'member_closest_address','value': "" })
+
 
 					if (m['location']['since']):
 						sincedate = datetime.datetime.fromtimestamp(m['location']['since'])
@@ -336,6 +340,7 @@ class Plugin(indigo.PluginBase):
 						device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
 					else:
 						device.updateStateImageOnServer(indigo.kStateImageSel.None)
+						# getattr(indigo.kStateImageSel, "NoImage", getattr(indigo.kStateImageSel, "None", ""))
 		
 			device.updateStatesOnServer(device_states)
 
