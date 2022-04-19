@@ -74,7 +74,7 @@ Download the Life360.indigoPlugin file and double click it
   - Username: your life360 username (email address). Any account holder in the Circle can use their account. If you don't have a username or password, you can initiate a password change in the app 
   - Password: your life360 password
   - Authentication Token: Leave this value alone
-  - Refresh Rate: This is the time (in seonds) between API calls to refresh device states. It's recommended to keep this rate at 15 seconds or more
+  - Refresh Rate: This is the time (in seconds) between API calls to refresh device states. It's recommended to keep this rate at 15 seconds or more
 
 The Plugin Config Dialog should not close unless your username and password are authenticated.  Check the Event Log for any errors. 
 
