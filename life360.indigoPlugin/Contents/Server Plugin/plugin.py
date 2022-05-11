@@ -220,7 +220,7 @@ class Plugin(indigo.PluginBase):
 				self.life360data = circle
 				self.create_member_list()
 			except Exception as e:
-				self.logger.error(e.message)
+				self.logger.error(str(e))
 		else:
 			self.logger.error("Error retrieving new Life360 JSON, Make sure you have the correct credentials in Plugin Config")
 		return
@@ -280,6 +280,16 @@ class Plugin(indigo.PluginBase):
 		except:
 			self.logger.error("Error instantiating geocoder object")
 		pass
+
+
+		try:
+			if self.life360data['members']:
+				pass
+		except Exception as m:
+			self.logger.error("Life360 error when parsing JSON: " + str(m))
+			self.logger.error(self.life360data)
+			return
+
 
 		if self.life360data['members']:
 			for m in self.life360data['members']:
