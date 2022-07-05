@@ -98,9 +98,15 @@
 		</State>
 		<State id="member_speed">
 			<ValueType>String</ValueType>
-			<TriggerLabel>Member Speed</TriggerLabel>
-			<TriggerLabelPrefix>Member Speed Changed to</TriggerLabelPrefix>
-			<ControlPageLabel>Member Speed</ControlPageLabel>
+			<TriggerLabel>Member Speed (mph)</TriggerLabel>
+			<TriggerLabelPrefix>Member Speed (mph) Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member Speed (mph)</ControlPageLabel>
+		</State>
+		<State id="member_speed_km">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Member Speed (km)</TriggerLabel>
+			<TriggerLabelPrefix>Member Speed (km) Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Member Speed (km)</ControlPageLabel>
 		</State>
 		<State id="member_in_transit">
 			<ValueType>Boolean</ValueType>

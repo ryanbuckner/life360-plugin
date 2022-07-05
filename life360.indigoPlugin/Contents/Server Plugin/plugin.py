@@ -270,6 +270,13 @@ class Plugin(indigo.PluginBase):
 			return str(round(2.2 * speed_int))
 
 
+	def kphSpeed(self, speed_int):
+		if speed_int < 2:
+			return str(speed_int)
+		else: 
+			return str(round(1.6093440006147 * 2.2 * speed_int))
+
+
 	def updatedevicestates(self, device):
 		device_states = []
 		member_device = device.pluginProps['membername']
@@ -286,8 +293,8 @@ class Plugin(indigo.PluginBase):
 			if self.life360data['members']:
 				pass
 		except Exception as m:
-			self.logger.error("Life360 error when parsing JSON: " + str(m))
-			self.logger.error(self.life360data)
+			self.logger.debug("Life360 error when parsing JSON: " + str(m))
+			self.logger.info("Life360 JSON file unreadable. Skipping...")
 			return
 
 
@@ -299,6 +306,9 @@ class Plugin(indigo.PluginBase):
 
 					# the raw speed from Life360 is exstimated to be MPH/2.2
 					adjustedSpeed = self.mphSpeed(float(m['location']['speed']))
+
+					# the raw speed from Life360 is exstimated to be mph * 1.609344
+					adjustedSpeedkm = self.kphSpeed(float(m['location']['speed']))
 
 					# the raw Life360 isDriving boolean always comes back 0. Let's use speed to determine isDriving for Indigo
 					adjustedDriving = self.isDriving(float(adjustedSpeed))
@@ -321,6 +331,7 @@ class Plugin(indigo.PluginBase):
 					device_states.append({'key': 'member_long','value': float(m['location']['longitude'])})
 					device_states.append({'key': 'member_is_driving','value': adjustedDriving })
 					device_states.append({'key': 'member_speed','value': adjustedSpeed })
+					device_states.append({'key': 'member_speed_km','value': adjustedSpeedkm })
 					
 
 					try: 
@@ -349,8 +360,7 @@ class Plugin(indigo.PluginBase):
 					if (m['location']['name'] == "Home"):
 						device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
 					else:
-						#device.updateStateImageOnServer(indigo.kStateImageSel.None)
-						getattr(indigo.kStateImageSel, "NoImage", getattr(indigo.kStateImageSel, "None", ""))
+						device.updateStateImageOnServer(indigo.kStateImageSel.NoImage)
 		
 			device.updateStatesOnServer(device_states)
 

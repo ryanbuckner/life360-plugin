@@ -38,7 +38,7 @@ More information can be found about Life360 [here](https://www.life360.com/suppo
 
 The plugin is my first attempt at an Indigo plugin, based on a script I wrote to update variables in Indigo. The Life360 api example was leveraged from the work done by [harperreed](https://github.com/harperreed/life360-python) 
 
-This version has not been testedby any other users but myself.  It is my first plugin so I look forward to the community adding more features and error handling before it's place in the Indigodomo Plugin Store. More informaton will be listed [on the GitHub Wiki](https://github.com/ryanbuckner/life360-plugin/wiki)
+More informaton will be listed [on the GitHub Wiki](https://github.com/ryanbuckner/life360-plugin/wiki)
 
 This plugin is not endorsed or associated with Life360 
 
@@ -62,6 +62,7 @@ This plugin is not endorsed or associated with Life360
   - Wifi turn on or not
   - Is Driving (boolean determined by speed)
   - Speed (raw Life360 speed * 2.2)
+  - Speed (in kph)
   - Location Since Timestamp
   - Last API update 
 
