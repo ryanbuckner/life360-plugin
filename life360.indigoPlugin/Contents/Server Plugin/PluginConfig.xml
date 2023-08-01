@@ -11,7 +11,7 @@
 	<Field id="life360_password" type="textfield" defaultValue="">
 		<Label>Enter life360 password:</Label>
 	</Field>
-	<Field id="authorizationtoken" type="textfield" readonly="YES" defaultValue="cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg">
+	<Field id="authorizationtoken" type="textfield" readonly="YES" defaultValue="Y2F0aGFwYWNyQVBoZUtVc3RlOGV2ZXZldnVjSGFmZVRydVl1ZnJhYzpkOEM5ZVlVdkE2dUZ1YnJ1SmVnZXRyZVZ1dFJlQ1JVWQ==">
 		<Label>Enter authorization token:</Label>
 		<Description>This is a googleable code. Leave this code.</Description>
 	</Field>

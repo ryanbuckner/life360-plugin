@@ -7,8 +7,8 @@
 ![Releases](https://img.shields.io/github/release-date/ryanbuckner/life360-plugin?color=red&label=latest%20release)
 
 
-# Life360 Plugin for Indigo Domotics Home Automation 
-## life360-indigo-plugin
+# Life360 Plugin for Indigo Domotics Home Automation
+## life360-indigo-plugin for Python3.10
 This Indigo Plugin provides a way to connect Indigo to your Life360.com family tracking information. This plugin is only supported for [Indigo Domotics Software ](http://www.indigodomo.com)
 
 ### What is Life360?

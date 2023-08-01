@@ -42,10 +42,11 @@ class Plugin(indigo.PluginBase):
 
 		try:
 			self.authorization_token = self.pluginPrefs.get('authorizationtoken', 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg')
+			self.authorization_token = "Y2F0aGFwYWNyQVBoZUtVc3RlOGV2ZXZldnVjSGFmZVRydVl1ZnJhYzpkOEM5ZVlVdkE2dUZ1YnJ1SmVnZXRyZVZ1dFJlQ1JVWQ=="
 			self.username = self.pluginPrefs.get('life360_username', None)
 			self.password = self.pluginPrefs.get('life360_password', None)
 			self.refresh_frequency = self.pluginPrefs.get('refresh_frequency', 30)
-			self.logger.debug("Success retriving preferences from Plugin config")
+			self.logger.debug("Success retrieving preferences from Plugin config")
 		except:
 			self.logger.error("Error retrieving Plugin preferences. Please use Configure to set")
 
