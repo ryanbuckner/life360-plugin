@@ -15,8 +15,9 @@ from life360 import life360
 import datetime
 try:
 	from geopy.geocoders import Nominatim
+	from geopy import Point
+	from geopy.distance import great_circle
 except: 
-	self.logger.debug("Geopy python library is not found. Try reinstalling the Plugin")
 	pass
 
 
@@ -39,6 +40,7 @@ class Plugin(indigo.PluginBase):
 		super(Plugin, self).__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 		self.debug = pluginPrefs.get("showDebugInfo", False)
 		self.deviceList = []
+		self.geoDeviceList = []
 
 		try:
 			self.authorization_token = self.pluginPrefs.get('authorizationtoken', 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg')
@@ -72,13 +74,18 @@ class Plugin(indigo.PluginBase):
 
 		if device.id not in self.deviceList:
 			self.update(device)
-			self.deviceList.append(device.id)
+			if (device.deviceTypeId == "members"):
+				self.deviceList.append(device.id)
+			elif  (device.deviceTypeId == "geofence"):
+				self.geoDeviceList.append(device.id)
 
 	########################################
 	def deviceStopComm(self, device):
 		self.logger.debug("Stopping device: " + device.name)
 		if device.id in self.deviceList:
 			self.deviceList.remove(device.id)
+		if device.id in self.geoDeviceList:
+			self.geoDeviceList.remove(device.id)
 
 	########################################
 	def runConcurrentThread(self):
@@ -99,6 +106,7 @@ class Plugin(indigo.PluginBase):
 					self.sleep(1 * pollingFreq)
 				self.get_new_life360json()
 				iterationcount += 1
+				self.logger.debug(self.deviceList)
 				for deviceId in self.deviceList:
 					# call the update method with the device instance
 					self.update(indigo.devices[deviceId])
@@ -138,7 +146,7 @@ class Plugin(indigo.PluginBase):
 			self.get_new_life360json()
 		self.logger.debug(self.life360data)
 		if (not self.debug):
-			indigo.server.log("Life360 data has been written to the debugLog. If you did not see it you may need to enable debugging in the Plugin Config UI")
+			indigo.server.log("Life360 data has been written to the debug Log. If you did not see it you may need to enable debugging in the Plugin Config UI")
 		return
 
 
@@ -214,7 +222,7 @@ class Plugin(indigo.PluginBase):
 		api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
 		if api.authenticate():
 			try:
-				self.logger.debug("Attepting to get list of circles")
+				self.logger.debug("Attempting to get list of circles")
 				circles = api.get_circles()
 				id = circles[0]['id']
 				circle = api.get_circle(id)
@@ -277,8 +285,23 @@ class Plugin(indigo.PluginBase):
 		else: 
 			return str(round(1.6093440006147 * 2.2 * speed_int))
 
+	
+	def isInsideGeoFence(self, device, memberLat, memberLong):
+		fenceLat = device.pluginProps['geofence_lat']
+		fenceLong =  device.pluginProps['geofence_long']
+		fenceRadius =  device.pluginProps['geofence_radius']
+		
+		center = Point(fenceLat, fenceLong)
+		
+		memberPoint = Point(memberLat, memberLong)
+
+		distance = great_circle(center, memberPoint).km
+		
+		return distance <= float(fenceRadius)
+
 
 	def updatedevicestates(self, device):
+
 		device_states = []
 		member_device = device.pluginProps['membername']
 		member_device_address = device.address
@@ -362,6 +385,17 @@ class Plugin(indigo.PluginBase):
 						device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
 					else:
 						device.updateStateImageOnServer(indigo.kStateImageSel.NoImage)
+
+					for deviceId in self.geoDeviceList:
+						# call the update method with the device instance
+						isFenced = self.isInsideGeoFence(indigo.devices[deviceId], loclat, loclng)
+						if (isFenced):
+							self.logger.debug(m['firstName'] + ' is within the geofence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
+							device_states.append({'key': 'member_within_geofence','value': indigo.devices[deviceId].pluginProps['geofence_name']}) 
+						else:
+							self.logger.debug(m['firstName'] + ' is not in the fence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
+							device_states.append({'key': 'member_within_geofence','value': ''}) 
+					
 		
 			device.updateStatesOnServer(device_states)
 
