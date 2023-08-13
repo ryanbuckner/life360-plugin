@@ -347,28 +347,49 @@ class Plugin(indigo.PluginBase):
 	def updategeodevicestates(self, device):
 		device_states = []
 		self.logger.debug("Updating Geofence device: " + device.name)
+		prevMemberCount = int(device.states['number_of_members_in_geofence'])
+		# firstEnteredTimestamp = device.states['first_entered_timestamp']
+		# lastExitedTimestamp = device.states['last_existed_timestamp']
 		memberCount = 0
 		memberList = []
 		occupied = False
-		#self.logger.debug(device.states)
+		x = datetime.datetime.now()
+		cur_date_time = x.strftime("%m/%d/%Y %I:%M %p")
+
 		for deviceId in self.deviceList:
 			# self.logger.debug(deviceId)
 			dev = indigo.devices[deviceId]
+			loclat = float(dev.states['member_lat'])
+			loclng = float(dev.states['member_long'])
 			#self.logger.debug(dev.states)
 			self.logger.debug("Checking member " + dev.states['member_first_name'] + " to see if they are in the fence")
-			if (device.pluginProps['geofence_name'] == dev.states['member_within_geofence']):
+			isFenced = self.isInsideGeoFence(device, loclat, loclng)
+			if (isFenced):
+				self.logger.debug("Member " + dev.states['member_first_name'] + " is in the fence")
 				memberCount += 1
 				memberList.append(dev.states['member_first_name'])
 				occupied = True
 
+		
+		if (memberCount > 0):
+			if (prevMemberCount == 0):
+				firstEnteredTimestamp = cur_date_time
+				device_states.append({'key': 'first_entered_timestamp','value': firstEnteredTimestamp })
+		elif (memberCount == 0):
+			if (prevMemberCount > 0):
+				lastExitedTimestamp = cur_date_time
+				device_states.append({'key': 'last_existed_timestamp','value': lastExitedTimestamp })
+
 		device_states.append({'key': 'members_in_geofence','value': ', '.join(memberList) })
 		device_states.append({'key': 'number_of_members_in_geofence','value': memberCount })
 		device_states.append({'key': 'occupied','value': occupied })
+		device_states.append({'key': 'last_update','value': cur_date_time })
 
 		if (memberCount > 0):
 			device.updateStateImageOnServer(indigo.kStateImageSel.SensorOn)
 		else:
 			device.updateStateImageOnServer(indigo.kStateImageSel.SensorOff)
+
 
 		device.updateStatesOnServer(device_states)
 
@@ -463,10 +484,10 @@ class Plugin(indigo.PluginBase):
 						# call the update method with the device instance
 						isFenced = self.isInsideGeoFence(indigo.devices[deviceId], loclat, loclng)
 						if (isFenced):
-							self.logger.debug(m['firstName'] + ' is within the geofence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
+							#self.logger.debug(m['firstName'] + ' is within the geofence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
 							device_states.append({'key': 'member_within_geofence','value': indigo.devices[deviceId].pluginProps['geofence_name']}) 
 						else:
-							self.logger.debug(m['firstName'] + ' is not in the fence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
+							#self.logger.debug(m['firstName'] + ' is not in the fence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
 							device_states.append({'key': 'member_within_geofence','value': 'None'}) 
 					
 		

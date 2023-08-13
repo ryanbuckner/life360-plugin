@@ -217,6 +217,21 @@
 			<TriggerLabelPrefix>Occupied Changed to</TriggerLabelPrefix>
 			<ControlPageLabel>Occupied</ControlPageLabel>
 		</State>
+		<State id="last_update">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Last GeoFence Update</TriggerLabel>
+			<ControlPageLabel>Last GeoFence Update</ControlPageLabel>
+		</State>
+		<State id="first_entered_timestamp">
+			<ValueType>String</ValueType>
+			<TriggerLabel>First Entered Timestamp Changes</TriggerLabel>
+			<ControlPageLabel>First Entered Timestamp</ControlPageLabel>
+		</State>
+		<State id="last_existed_timestamp">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Last Existed Timestamp Changes</TriggerLabel>
+			<ControlPageLabel>Last Existed Timestamp</ControlPageLabel>
+		</State>
 	</States>
 	<UiDisplayStateId>number_of_members_in_geofence</UiDisplayStateId>
 	</Device>
