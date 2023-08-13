@@ -211,6 +211,12 @@
 			<TriggerLabelPrefix>Number of Members in Geofence Changed to</TriggerLabelPrefix>
 			<ControlPageLabel>Numbers of Members in Geofence</ControlPageLabel>
 		</State>
+		<State id="occupied">
+			<ValueType>Boolean</ValueType>
+			<TriggerLabel>Occupied</TriggerLabel>
+			<TriggerLabelPrefix>Occupied Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Occupied</ControlPageLabel>
+		</State>
 	</States>
 	<UiDisplayStateId>number_of_members_in_geofence</UiDisplayStateId>
 	</Device>

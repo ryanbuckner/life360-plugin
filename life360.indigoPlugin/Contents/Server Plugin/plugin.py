@@ -349,6 +349,7 @@ class Plugin(indigo.PluginBase):
 		self.logger.debug("Updating Geofence device: " + device.name)
 		memberCount = 0
 		memberList = []
+		occupied = False
 		#self.logger.debug(device.states)
 		for deviceId in self.deviceList:
 			# self.logger.debug(deviceId)
@@ -358,14 +359,16 @@ class Plugin(indigo.PluginBase):
 			if (device.pluginProps['geofence_name'] == dev.states['member_within_geofence']):
 				memberCount += 1
 				memberList.append(dev.states['member_first_name'])
+				occupied = True
 
 		device_states.append({'key': 'members_in_geofence','value': ', '.join(memberList) })
 		device_states.append({'key': 'number_of_members_in_geofence','value': memberCount })
+		device_states.append({'key': 'occupied','value': occupied })
 
 		if (memberCount > 0):
-			device.updateStateImageOnServer(indigo.kStateImageSel.PowerOn)
+			device.updateStateImageOnServer(indigo.kStateImageSel.SensorOn)
 		else:
-			device.updateStateImageOnServer(indigo.kStateImageSel.PowerOff)
+			device.updateStateImageOnServer(indigo.kStateImageSel.SensorOff)
 
 		device.updateStatesOnServer(device_states)
 
