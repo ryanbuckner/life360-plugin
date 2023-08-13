@@ -149,58 +149,69 @@
 	
 	<Device type="custom" id="geofence">
 	<Name>Life360 Custom Geofence</Name>
-		<ConfigUI>
-			<SupportURL>https://forums.indigodomo.com/viewforum.php?f=363</SupportURL>
-			<Field type="checkbox" 
-            	id="usePlaces" 
-	            defaultValue="false">
-	        <Label>Use Life360 Places:</Label>
-	        <Description>Check to show list of places</Description>
-	    	</Field>
-			<Field
-				id="places_name"
-				type="menu"
-				visibleBindingId="usePlaces"
-				visibleBindingValue="true">
-				<List class="self" filter="" method="get_places_list" dynamicReload="true"/>
-				<Label>Life360 Defined Place</Label>
-			</Field>
-			<Field id="placesButton" 
-	            type="button" 
-	            tooltip="Click this button populate lat / long from Places"
-	            visibleBindingId="usePlaces"
-				visibleBindingValue="true">
-		        <Label>Press to populate from Place chosen:</Label>
-		        <Title>Populate</Title>
-		        <CallbackMethod>populate_places_attributes</CallbackMethod>
-   			 </Field>
-	        <Field 
-	        	id="geofence_name" 
-	        	type="textfield" 
-	        	defaultValue="" 
-	        	hidden="false">
-	        	<Label>Name</Label>
-	        </Field>
-	        <Field 
-	        	id="geofence_lat" 
-	        	type="textfield" 
-	        	defaultValue="0.00000000" 
-	        	hidden="false">
-	        	<Label>Geofence Latitude</Label>
-	        </Field>
-	        <Field id="geofence_long" type="textfield" defaultValue="0.00000000" hidden="false">
-	        	<Label>Geofence Longitude</Label>
-	        </Field>
-	        <Field id="geofence_radius" type="textfield" defaultValue="0" hidden="false">
-	        	<Label>Geolocation Radius (km)</Label>
-	        </Field>
-	        <Field id="SupportsOnState" type="checkbox" defaultValue="false" hidden="true" />
-			<Field id="SupportsSensorValue" type="checkbox" defaultValue="false" hidden="true" />
-			<Field id="SupportsStatusRequest" type="checkbox" defaultValue="true" hidden="true" />
-		</ConfigUI>
-		<States>
-			
-		</States>
-		<UiDisplayStateId>member_360_location</UiDisplayStateId>
+	<ConfigUI>
+		<SupportURL>https://forums.indigodomo.com/viewforum.php?f=363</SupportURL>
+		<Field type="checkbox" 
+        	id="usePlaces" 
+            defaultValue="false">
+        <Label>Use Life360 Places:</Label>
+        <Description>Check to show list of places</Description>
+    	</Field>
+		<Field
+			id="places_name"
+			type="menu"
+			visibleBindingId="usePlaces"
+			visibleBindingValue="true">
+			<List class="self" filter="" method="get_places_list" dynamicReload="true"/>
+			<Label>Life360 Defined Place</Label>
+		</Field>
+		<Field id="placesButton" 
+            type="button" 
+            tooltip="Click this button populate lat / long from Places"
+            visibleBindingId="usePlaces"
+			visibleBindingValue="true">
+	        <Label>Press to populate from Place chosen:</Label>
+	        <Title>Populate</Title>
+	        <CallbackMethod>populate_places_attributes</CallbackMethod>
+			 </Field>
+        <Field 
+        	id="geofence_name" 
+        	type="textfield" 
+        	defaultValue="" 
+        	hidden="false">
+        	<Label>Name</Label>
+        </Field>
+        <Field 
+        	id="geofence_lat" 
+        	type="textfield" 
+        	defaultValue="0.00000000" 
+        	hidden="false">
+        	<Label>Geofence Latitude</Label>
+        </Field>
+        <Field id="geofence_long" type="textfield" defaultValue="0.00000000" hidden="false">
+        	<Label>Geofence Longitude</Label>
+        </Field>
+        <Field id="geofence_radius" type="textfield" defaultValue="0" hidden="false">
+        	<Label>Geolocation Radius (km)</Label>
+        </Field>
+        <Field id="SupportsOnState" type="checkbox" defaultValue="false" hidden="true" />
+		<Field id="SupportsSensorValue" type="checkbox" defaultValue="false" hidden="true" />
+		<Field id="SupportsStatusRequest" type="checkbox" defaultValue="true" hidden="true" />
+	</ConfigUI>
+	<States>
+		<State id="members_in_geofence">
+			<ValueType>String</ValueType>
+			<TriggerLabel>Members in Geofence</TriggerLabel>
+			<TriggerLabelPrefix>Members in Geofence Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Members in Geofence</ControlPageLabel>
+		</State>
+		<State id="number_of_members_in_geofence">
+			<ValueType>Number</ValueType>
+			<TriggerLabel>Number of Members in Geofence</TriggerLabel>
+			<TriggerLabelPrefix>Number of Members in Geofence Changed to</TriggerLabelPrefix>
+			<ControlPageLabel>Numbers of Members in Geofence</ControlPageLabel>
+		</State>
+	</States>
+	<UiDisplayStateId>number_of_members_in_geofence</UiDisplayStateId>
 	</Device>
 </Devices>

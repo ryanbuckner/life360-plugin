@@ -113,6 +113,8 @@ class Plugin(indigo.PluginBase):
 					# call the update method with the device instance
 					self.update(indigo.devices[deviceId])
 					self.updatedevicestates(indigo.devices[deviceId])
+				for geoDeviceId in self.geoDeviceList:
+					self.updategeodevicestates(indigo.devices[geoDeviceId])
 		except self.StopThread:
 			pass
 
@@ -342,6 +344,32 @@ class Plugin(indigo.PluginBase):
 		return distance <= float(fenceRadius)
 
 
+	def updategeodevicestates(self, device):
+		device_states = []
+		self.logger.debug("Updating Geofence device: " + device.name)
+		memberCount = 0
+		memberList = []
+		#self.logger.debug(device.states)
+		for deviceId in self.deviceList:
+			# self.logger.debug(deviceId)
+			dev = indigo.devices[deviceId]
+			#self.logger.debug(dev.states)
+			self.logger.debug("Checking member " + dev.states['member_first_name'] + " to see if they are in the fence")
+			if (device.pluginProps['geofence_name'] == dev.states['member_within_geofence']):
+				memberCount += 1
+				memberList.append(dev.states['member_first_name'])
+
+		device_states.append({'key': 'members_in_geofence','value': ', '.join(memberList) })
+		device_states.append({'key': 'number_of_members_in_geofence','value': memberCount })
+
+		if (memberCount > 0):
+			device.updateStateImageOnServer(indigo.kStateImageSel.PowerOn)
+		else:
+			device.updateStateImageOnServer(indigo.kStateImageSel.PowerOff)
+
+		device.updateStatesOnServer(device_states)
+
+
 	def updatedevicestates(self, device):
 
 		device_states = []
@@ -436,7 +464,7 @@ class Plugin(indigo.PluginBase):
 							device_states.append({'key': 'member_within_geofence','value': indigo.devices[deviceId].pluginProps['geofence_name']}) 
 						else:
 							self.logger.debug(m['firstName'] + ' is not in the fence named ' + indigo.devices[deviceId].pluginProps['geofence_name'])
-							device_states.append({'key': 'member_within_geofence','value': ''}) 
+							device_states.append({'key': 'member_within_geofence','value': 'None'}) 
 					
 		
 			device.updateStatesOnServer(device_states)
