@@ -64,7 +64,9 @@ class Plugin(indigo.PluginBase):
 		self.logger.info(u"{0:=^130}".format(""))
 
 		self.life360data = {}
+		self.placesdata = {}
 		self.member_list = {}
+		self.places_list = {}
 
 
 	########################################
@@ -140,14 +142,17 @@ class Plugin(indigo.PluginBase):
 			valuesDict['address'] = "Unknown"
 		return valuesDict
 
-	#dump JSON to event log
-	def write_json_to_log(self):
-		if (len(self.life360data) == 0):
-			self.get_new_life360json()
-		self.logger.debug(self.life360data)
-		if (not self.debug):
-			indigo.server.log("Life360 data has been written to the debug Log. If you did not see it you may need to enable debugging in the Plugin Config UI")
-		return
+	def populate_places_attributes(self, valuesDict, typeId, devId):
+		if valuesDict['places_name'] in self.places_list:
+			for p in self.placesdata['places']:
+				if (p['name'] == valuesDict['places_name']):
+					# assign the values
+					valuesDict['geofence_name'] = p['name']
+					valuesDict['geofence_lat'] = p['latitude']
+					valuesDict['geofence_long'] = p['longitude']
+					valuesDict['geofence_radius'] = self.convertFeetToKm(float(p['radius']))
+		return valuesDict
+
 
 
 	########################################
@@ -218,16 +223,26 @@ class Plugin(indigo.PluginBase):
 		return retList
 
 
+	def get_places_list(self, filter="", valuesDict=None, typeId="", targetId=0):
+		if (len(self.places_list) == 0):
+			self.create_places_list()
+		retList = list(self.places_list.keys())
+		return retList
+
+
 	def get_new_life360json(self):
 		api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
 		if api.authenticate():
 			try:
-				self.logger.debug("Attempting to get list of circles")
+				self.logger.debug("Attempting to get list of circles and places")
 				circles = api.get_circles()
 				id = circles[0]['id']
 				circle = api.get_circle(id)
+				places = api.get_circle_places(id)
 				self.life360data = circle
+				self.placesdata = places
 				self.create_member_list()
+				self.create_places_list()
 			except Exception as e:
 				self.logger.error(str(e))
 		else:
@@ -243,6 +258,17 @@ class Plugin(indigo.PluginBase):
 			self.member_list[m['firstName']] = m['id']
 		return
 
+
+	def create_places_list(self):
+		if len(self.life360data) == 0:
+			self.get_new_life360json()
+		self.places_list.clear()
+		for p in self.placesdata['places']:
+			self.places_list[p['name']] = p['id']
+		self.logger.debug("creating places_list")
+		self.logger.debug(self.places_list)
+
+
 	def toggleDebugging(self):
 		if self.debug:
 			self.debug = False
@@ -254,9 +280,20 @@ class Plugin(indigo.PluginBase):
 			self.logger.debug(u"Turning on debug logging (Toggle Debugging menu item chosen).")
 
 
+
 	############################
 	# Action Method
 	#############################
+
+
+	#dump JSON to event log
+	def write_json_to_log(self):
+		if (len(self.life360data) == 0):
+			self.get_new_life360json()
+		self.logger.debug(self.life360data)
+		if (not self.debug):
+			indigo.server.log("Life360 data has been written to the debug Log. If you did not see it you may need to enable debugging in the Plugin Config UI")
+		return
 
 
 	def refresh_member_data(self,pluginAction, device):
@@ -286,6 +323,11 @@ class Plugin(indigo.PluginBase):
 			return str(round(1.6093440006147 * 2.2 * speed_int))
 
 	
+	def convertFeetToKm(self, radius_feet):
+		feet_per_kilometer = 3280.84  # 1 kilometer = 3280.84 feet
+		return radius_feet / feet_per_kilometer
+
+
 	def isInsideGeoFence(self, device, memberLat, memberLong):
 		fenceLat = device.pluginProps['geofence_lat']
 		fenceLong =  device.pluginProps['geofence_long']

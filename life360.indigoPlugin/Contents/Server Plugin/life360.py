@@ -54,3 +54,9 @@ class life360:
         authheader = "bearer " + self.access_token
         r = self.make_request(url=url, method='GET', authheader=authheader)
         return r
+
+    def get_circle_places(self, circle_id):
+        url = self.base_url + self.circle_url + circle_id + "/places"
+        authheader = "bearer " + self.access_token
+        r = self.make_request(url=url, method='GET', authheader=authheader)
+        return r
