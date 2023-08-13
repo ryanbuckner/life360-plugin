@@ -152,7 +152,7 @@ class Plugin(indigo.PluginBase):
 					valuesDict['geofence_name'] = p['name']
 					valuesDict['geofence_lat'] = p['latitude']
 					valuesDict['geofence_long'] = p['longitude']
-					valuesDict['geofence_radius'] = self.convertFeetToKm(float(p['radius']))
+					valuesDict['geofence_radius'] = self.convertMetersToKm(float(p['radius']))
 		return valuesDict
 
 
@@ -328,6 +328,9 @@ class Plugin(indigo.PluginBase):
 	def convertFeetToKm(self, radius_feet):
 		feet_per_kilometer = 3280.84  # 1 kilometer = 3280.84 feet
 		return radius_feet / feet_per_kilometer
+
+	def convertMetersToKm(self, radius_meters):
+		return radius_meters / 1000
 
 
 	def isInsideGeoFence(self, device, memberLat, memberLong):
