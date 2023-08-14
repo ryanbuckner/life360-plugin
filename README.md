@@ -94,11 +94,11 @@ The Plugin Config Dialog should not close unless your username and password are 
   - Choose the member that this device will represent from the dropdown list. If there is nothing in the dropdown, there maybe a problem with your username and password. Check the event log
 
 ###### Geofence Device Config 
-- create a new device of Type Life360 Custom Geofence
+- create a new device of Type Life360 
   - model should be Life360 Custom Geofence
-  - The geofence is a circle conprised of a center and a perimeter based on the radius you choose
-  - You have the option to pre-populate the latitude, longitude, and radius from predefined Life360 app Places definition. Choose the place and press the "populate" button
-  - The Geofence radius is defined in Kilometers. If you decide to use the Places option, it will be covered for you. If not, use the tool 
+  - The geofence is a circle conprised of a center and a perimeter based on the radius (in Km) you enter
+  - You have the option to pre-populate the name, latitude, longitude, and radius from predefined Life360 app Places definition. Check the box that says "Use Life 360 Places". Choose the place from the dropdown and press the "populate" button
+  - The Geofence radius is defined in Kilometers. If you decide to use the Places option, it will be covered for you. If not, use the tool to convert from feet to Km
 
 
 ### Cautions:
