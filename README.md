@@ -46,7 +46,7 @@ This plugin is not endorsed or associated with Life360
 
 1) Support for only 1 Circle. This must be the first Circle in your account
 2) Multiple devices that each represent users in your Circle
-3) Custom device states
+3) Custom device states of the member device
   - Unique Member ID 
   - First Name
   - Last Name
@@ -65,6 +65,13 @@ This plugin is not endorsed or associated with Life360
   - Speed (in kph)
   - Location Since Timestamp
   - Last API update 
+4) Custom device states of the Life360 Custom Geofence
+  - Occupied
+  - Number of Members in Geofence 
+  - Members in Geofence
+  - Last Update Timestamp
+  - First Entered Timestamp
+  - Last Exited Timestamp 
 
 #### Installation
 
@@ -86,11 +93,19 @@ The Plugin Config Dialog should not close unless your username and password are 
   - Press Edit Device Settings... 
   - Choose the member that this device will represent from the dropdown list. If there is nothing in the dropdown, there maybe a problem with your username and password. Check the event log
 
+###### Geofence Device Config 
+- create a new device of Type Life360 Custom Geofence
+  - model should be Life360 Custom Geofence
+  - The geofence is a circle conprised of a center and a perimeter based on the radius you choose
+  - You have the option to pre-populate the latitude, longitude, and radius from predefined Life360 app Places definition. Choose the place and press the "populate" button
+  - The Geofence radius is defined in Kilometers. If you decide to use the Places option, it will be covered for you. If not, use the tool 
+
+
 ### Cautions:
 
-I am not an expert on Life360. I have not yet had the Indigo community test this plugin. 
+I am not an expert on Life360. 
 
-As this is the first version of my first plugin, so usage is at your own risk ! By using this version you are joining the testing team, thanks for the help.   I would love to hear your feedback and thoughts.
+By using this version you are joining the testing team, thanks for the help.   I would love to hear your feedback and thoughts.
 
 ### Troubleshooting:
 

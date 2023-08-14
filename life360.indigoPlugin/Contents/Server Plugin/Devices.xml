@@ -173,7 +173,7 @@
 	        <Label>Press to populate from Place chosen:</Label>
 	        <Title>Populate</Title>
 	        <CallbackMethod>populate_places_attributes</CallbackMethod>
-			 </Field>
+		</Field>
         <Field 
         	id="geofence_name" 
         	type="textfield" 
@@ -193,6 +193,24 @@
         </Field>
         <Field id="geofence_radius" type="textfield" defaultValue="0" hidden="false">
         	<Label>Geolocation Radius (km)</Label>
+        </Field>
+        <Field id="simpleSeparator1" type="separator" />
+        <Field id="conversionLabel" type="label">
+			<Label>Use the conversion tool below to covert from feet to Km. The radius above will need to be in Km. Note: Places imported will covert for you automatically
+			</Label>
+		</Field>
+		<Field id="radius_to_convert" type="textfield" defaultValue="0" hidden="false">
+        	<Label>Radius in feet</Label>
+        </Field>
+        <Field id="convertFeetButton" 
+            type="button" 
+            tooltip="Click this button to convert feet to Km">
+	        <Label>Press to convert from feet to Km:</Label>
+	        <Title>Convert</Title>
+	        <CallbackMethod>convert_feet_to_km_props</CallbackMethod>
+		</Field>
+        <Field id="radius_converted_km" type="textfield" defaultValue="0" hidden="false" readonly="true">
+        	<Label>Radius in Km</Label>
         </Field>
         <Field id="SupportsOnState" type="checkbox" defaultValue="false" hidden="true" />
 		<Field id="SupportsSensorValue" type="checkbox" defaultValue="false" hidden="true" />

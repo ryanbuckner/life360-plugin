@@ -129,6 +129,30 @@ class Plugin(indigo.PluginBase):
 	# UI Validate, Device Config
 	########################################
 	def validateDeviceConfigUi(self, valuesDict, typeId, device):
+		if (typeId == 'geofence'):
+			if (not valuesDict['geofence_lat']):
+				self.logger.error("Geofence latitude is a required field")
+				errorsDict = indigo.Dict()
+				errorsDict['geofence_lat'] = "Geofence latitude is a required field"
+				return (False, valuesDict, errorsDict)
+
+			if (not valuesDict['geofence_long']):
+				self.logger.error("Geofence latitude is a required field")
+				errorsDict = indigo.Dict()
+				errorsDict['geofence_long'] = "Geofence longitude is a required field"
+				return (False, valuesDict, errorsDict)
+
+			if (not valuesDict['geofence_name']):
+				self.logger.error("Geofence name is a required field")
+				errorsDict = indigo.Dict()
+				errorsDict['geofence_name'] = "Geofence name is a required field"
+				return (False, valuesDict, errorsDict)
+
+			if (not valuesDict['geofence_radius']):
+				self.logger.error("Geofence radius is a required field")
+				errorsDict = indigo.Dict()
+				errorsDict['geofence_name'] = "Geofence radius is a required field"
+				return (False, valuesDict, errorsDict)
 
 		return (True, valuesDict)
 
@@ -144,6 +168,7 @@ class Plugin(indigo.PluginBase):
 			valuesDict['address'] = "Unknown"
 		return valuesDict
 
+
 	def populate_places_attributes(self, valuesDict, typeId, devId):
 		if valuesDict['places_name'] in self.places_list:
 			for p in self.placesdata['places']:
@@ -155,6 +180,11 @@ class Plugin(indigo.PluginBase):
 					valuesDict['geofence_radius'] = self.convertMetersToKm(float(p['radius']))
 		return valuesDict
 
+
+	def convert_feet_to_km_props(self, valuesDict, typeId, devId):
+		kmRadius = self.convertFeetToKm(float(valuesDict['radius_to_convert']))
+		valuesDict['radius_converted_km'] = kmRadius
+		return valuesDict
 
 
 	########################################
