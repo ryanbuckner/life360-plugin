@@ -10,6 +10,7 @@
 # Imports
 ################################################################################
 import indigo
+import re
 import sys
 from life360 import life360
 import datetime
@@ -136,10 +137,22 @@ class Plugin(indigo.PluginBase):
 				errorsDict['geofence_lat'] = "Geofence latitude is a required field"
 				return (False, valuesDict, errorsDict)
 
+			if (not bool(re.match(r'^[-+]?\d*\.?\d+$', valuesDict['geofence_lat']))):
+				self.logger.error("Geofence latitude must be a valid float")
+				errorsDict = indigo.Dict()
+				errorsDict['geofence_lat'] = "Geofence latitude must be a valid float"
+				return (False, valuesDict, errorsDict)
+
 			if (not valuesDict['geofence_long']):
 				self.logger.error("Geofence latitude is a required field")
 				errorsDict = indigo.Dict()
 				errorsDict['geofence_long'] = "Geofence longitude is a required field"
+				return (False, valuesDict, errorsDict)
+
+			if (not bool(re.match(r'^[-+]?\d*\.?\d+$', valuesDict['geofence_long']))):
+				self.logger.error("Geofence longitude must be a valid float")
+				errorsDict = indigo.Dict()
+				errorsDict['geofence_long'] = "Geofence longitude must be a valid float"
 				return (False, valuesDict, errorsDict)
 
 			if (not valuesDict['geofence_name']):
@@ -263,7 +276,12 @@ class Plugin(indigo.PluginBase):
 
 
 	def get_new_life360json(self):
-		api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
+		try:			
+			api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
+		except Exception as g:
+				self.logger.error(str(g))
+				self.logger.error("Error retrieving new Life360 JSON")
+				return
 		if api.authenticate():
 			try:
 				self.logger.debug("Attempting to get list of circles and places")
@@ -524,7 +542,7 @@ class Plugin(indigo.PluginBase):
 							device_states.append({'key': 'member_within_geofence','value': 'None'}) 
 					
 		
-			device.updateStatesOnServer(device_states)
+					device.updateStatesOnServer(device_states)
 
 		else:
 			pass
