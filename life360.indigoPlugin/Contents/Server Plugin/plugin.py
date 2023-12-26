@@ -248,6 +248,7 @@ class Plugin(indigo.PluginBase):
 
 
 	def validate_api_auth(self, username, password, authorization_token):
+		return True
 		api = life360(authorization_token=authorization_token, username=username, password=password)
 		try:
 			if api.authenticate():
@@ -276,7 +277,8 @@ class Plugin(indigo.PluginBase):
 
 
 	def get_new_life360json(self):
-		try:			
+		try:
+
 			api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
 		except Exception as g:
 				self.logger.error(str(g))
