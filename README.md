@@ -99,6 +99,7 @@ The Plugin Config Dialog should not close unless your username and password are 
   - The geofence is a circle conprised of a center and a perimeter based on the radius (in Km) you enter
   - You have the option to pre-populate the name, latitude, longitude, and radius from predefined Life360 app Places definition. Check the box that says "Use Life 360 Places". Choose the place from the dropdown and press the "populate" button
   - The Geofence radius is defined in Kilometers. If you decide to use the Places option, it will be covered for you. If not, use the tool to convert from feet to Km
+  - You can create a temporary geofence using the current location of a member. Create through the plugin menu 
 
 
 ### Cautions:

@@ -5,4 +5,8 @@
 		<Name>Refresh Life360 Member Data</Name>
 		<CallbackMethod>refresh_member_data</CallbackMethod>
 	</Action>
+	<Action id="create_quick_geofence" deviceFilter="self.members">
+		<Name>Create Quick Geofence</Name>
+		<CallbackMethod>create_quick_geofence</CallbackMethod>
+	</Action>
 </Actions>

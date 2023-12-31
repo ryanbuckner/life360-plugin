@@ -4,11 +4,15 @@
         <Name>Refresh Member Data</Name>
         <ConfigUI actionId="refresh_member_data"/>
     </MenuItem>
-    <MenuItem id="menu2" >
+     <MenuItem id="menu2" >
+        <Name>Create Quick Geofence</Name>
+        <ConfigUI actionId="create_quick_geofence"/>
+    </MenuItem>
+    <MenuItem id="menu3" >
         <Name>Write JSON to Event Log</Name>
          <CallbackMethod>write_json_to_log</CallbackMethod>
     </MenuItem>
-    <MenuItem id="menu3" >
+    <MenuItem id="menu4" >
         <Name>Toggle Debug</Name>
          <CallbackMethod>toggleDebugging</CallbackMethod>
     </MenuItem>

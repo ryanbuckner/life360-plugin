@@ -354,6 +354,23 @@ class Plugin(indigo.PluginBase):
 		return
 
 
+	def create_quick_geofence(self, pluginAction, device):
+		self.logger.info("Action called for creation of temporary geofence")
+		# get member information 
+		temp_name = device.states['member_first_name']
+		temp_long = device.states['member_long']
+		temp_lat = device.states['member_lat']
+		temp_radius = '0.0762' #later pull this from prefs
+		temp_folder = '' #pull this from prefs
+		# create a new geofence device 
+		self.logger.debug(f"Creating temporary geofence using member info from {temp_name}")
+		indigo.device.create(protocol=indigo.kProtocol.Plugin, name='Life360 temp geofence - ' + temp_name, \
+			description='Dynamic Geofence', pluginId='com.ryanbuckner.indigoplugin.life360',  \
+			deviceTypeId='geofence', props={'geofence_name': 'Life360 temp geofence - ' + temp_name , 'geofence_lat': temp_lat, \
+			'geofence_long':temp_long , 'geofence_radius':temp_radius})
+		return
+
+
 	def isDriving(self, speed_int):
 		if (round(speed_int) > 1):
 			return 1
