@@ -8,7 +8,7 @@ from life360.exceptions import LoginError, RateLimited
 
 
 class SyncLife360:
-    """Synchronous wrapper for Life360 API."""
+    """Synchronous wrapper for Life360 API. Testing"""
     
     def __init__(self, access_token=None, username=None, password=None, logger=None):
         """

@@ -12,7 +12,7 @@
 This Indigo Plugin provides a way to connect Indigo to your Life360.com family tracking information. This plugin is only supported for [Indigo Domotics Software ](http://www.indigodomo.com)
 
 ### Updated for CloudFlare
-This plugin has been updated to use the CloudFlare authentication from pnbruckner/ha-life360
+This plugin has been updated to use the CloudFlare authentication from pnbruckner/ha-life360. It is not yet working
 
 
 ### What is Life360?

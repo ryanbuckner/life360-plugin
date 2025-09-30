@@ -4,7 +4,7 @@
 # Copyright (c) 2021 ryanbuckner 
 # https://github.com/ryanbuckner/life360-plugin/wiki
 #
-# Based on neilk's Solcast plugin
+# Based on neilk's Solcast plugin and updated in Home Assistant 
 
 ################################################################################
 # Imports
