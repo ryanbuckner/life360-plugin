@@ -12,7 +12,7 @@
 import indigo
 import re
 import sys
-from life360 import life360
+from sync_life360 import SyncLife360
 import datetime
 try:
 	from geopy.geocoders import Nominatim
@@ -44,10 +44,15 @@ class Plugin(indigo.PluginBase):
 		self.geoDeviceList = []
 
 		try:
-			self.authorization_token = self.pluginPrefs.get('authorizationtoken', 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg')
-			self.authorization_token = "Y2F0aGFwYWNyQVBoZUtVc3RlOGV2ZXZldnVjSGFmZVRydVl1ZnJhYzpkOEM5ZVlVdkE2dUZ1YnJ1SmVnZXRyZVZ1dFJlQ1JVWQ=="
+			# Authorization token from plugin prefs
+			# This now stores the Bearer access token (obtained from browser)
+			self.authorization_token = self.pluginPrefs.get('authorizationtoken', None)
+			self.authorization_token = "MzM2YjA5MDYtOTEwNC00M2RiLTgxZWMtMzE2MGUyODgyMGQ4"
+			
+			# Username/password (optional - for legacy support)
 			self.username = self.pluginPrefs.get('life360_username', None)
 			self.password = self.pluginPrefs.get('life360_password', None)
+			
 			self.refresh_frequency = self.pluginPrefs.get('refresh_frequency', 30)
 			self.logger.debug("Success retrieving preferences from Plugin config")
 		except:
@@ -62,6 +67,15 @@ class Plugin(indigo.PluginBase):
 		self.logger.info(u"{0:<30} {1}".format("Indigo version:", indigo.server.version))
 		self.logger.info(u"{0:<30} {1}".format("Python version:", sys.version.replace('\n', '')))
 		self.logger.info(u"{0:<30} {1}".format("Python Directory:", sys.prefix.replace('\n', '')))
+		
+		# Log authentication method being used
+		if self.authorization_token:
+			self.logger.info(u"{0:<30} {1}".format("Auth Method:", "Bearer Token"))
+		elif self.username and self.password:
+			self.logger.info(u"{0:<30} {1}".format("Auth Method:", "Username/Password (Legacy - may not work)"))
+		else:
+			self.logger.warning(u"No authentication credentials configured!")
+			
 		self.logger.info(u"{0:=^130}".format(""))
 
 		self.life360data = {}
@@ -210,35 +224,56 @@ class Plugin(indigo.PluginBase):
 			errorsDict['refresh_frequency'] = "Invalid entry for Refresh Frequency - must be greater than 15"
 			return (False, valuesDict, errorsDict)
 
-		if (not valuesDict['life360_username']):
-			self.logger.error("Invalid entry for Life360 username - cannot be empty")
+		# Check if using Bearer Token method or Username/Password method
+		auth_token = valuesDict.get('authorizationtoken', '').strip()
+		username = valuesDict.get('life360_username', '').strip()
+		password = valuesDict.get('life360_password', '').strip()
+
+		# Must have either bearer token OR username+password
+		if not auth_token and not (username and password):
+			self.logger.error("You must provide either an Authorization Token OR Username and Password")
 			errorsDict = indigo.Dict()
-			errorsDict['life360_username'] = "Invalid entry for Life360 username - cannot be empty"
+			errorsDict['authorizationtoken'] = "Provide Authorization Token OR Username/Password"
+			errorsDict['life360_username'] = "Provide Authorization Token OR Username/Password"
 			return (False, valuesDict, errorsDict)
 
-		if (valuesDict['life360_username'].find('@') == -1):
-			self.logger.error("Invalid entry for Life360 username - must be a valid email address")
-			errorsDict = indigo.Dict()
-			errorsDict['life360_username'] = "Invalid entry for Life360 username - must be a valid email address"
-			return (False, valuesDict, errorsDict)
+		# If using username/password, validate email format
+		if username and not auth_token:
+			if (not valuesDict['life360_username']):
+				self.logger.error("Invalid entry for Life360 username - cannot be empty")
+				errorsDict = indigo.Dict()
+				errorsDict['life360_username'] = "Invalid entry for Life360 username - cannot be empty"
+				return (False, valuesDict, errorsDict)
 
-		if (valuesDict['life360_username'].find('.') == -1):
-			self.logger.error("Invalid entry for Life360 username - must be a valid email address")
-			errorsDict = indigo.Dict()
-			errorsDict['life360_username'] = "Invalid entry for Life360 username - must be a valid email address"
-			return (False, valuesDict, errorsDict)
+			if (valuesDict['life360_username'].find('@') == -1):
+				self.logger.error("Invalid entry for Life360 username - must be a valid email address")
+				errorsDict = indigo.Dict()
+				errorsDict['life360_username'] = "Invalid entry for Life360 username - must be a valid email address"
+				return (False, valuesDict, errorsDict)
 
-		if (not valuesDict['life360_password']):
-			self.logger.error("Invalid entry for Life360 password - cannot be empty")
-			errorsDict = indigo.Dict()
-			errorsDict['life360_password'] = "Invalid entry for Life360 password - cannot be empty"
-			return (False, valuesDict, errorsDict)
+			if (valuesDict['life360_username'].find('.') == -1):
+				self.logger.error("Invalid entry for Life360 username - must be a valid email address")
+				errorsDict = indigo.Dict()
+				errorsDict['life360_username'] = "Invalid entry for Life360 username - must be a valid email address"
+				return (False, valuesDict, errorsDict)
 
-		auth_result = self.validate_api_auth(valuesDict['life360_username'], valuesDict['life360_password'], valuesDict['authorizationtoken'])
+			if (not valuesDict['life360_password']):
+				self.logger.error("Invalid entry for Life360 password - cannot be empty")
+				errorsDict = indigo.Dict()
+				errorsDict['life360_password'] = "Invalid entry for Life360 password - cannot be empty"
+				return (False, valuesDict, errorsDict)
+
+		# Validate authentication
+		auth_result = self.validate_api_auth(valuesDict.get('life360_username'), 
+											  valuesDict.get('life360_password'), 
+											  valuesDict.get('authorizationtoken'))
 		if (not auth_result):
-			self.logger.error("Life360 API Authentication failed - check your username and password")
+			self.logger.error("Life360 API Authentication failed - check your credentials")
 			errorsDict = indigo.Dict()
-			errorsDict['life360_password'] = "Life360 API Authentication failed - check your username and password"
+			if auth_token:
+				errorsDict['authorizationtoken'] = "Life360 API Authentication failed - check your Authorization Token"
+			else:
+				errorsDict['life360_password'] = "Life360 API Authentication failed - check your username and password"
 			return (False, valuesDict, errorsDict)
 
 		self.debug = valuesDict['showDebugInfo']
@@ -248,17 +283,39 @@ class Plugin(indigo.PluginBase):
 
 
 	def validate_api_auth(self, username, password, authorization_token):
-		return True
-		api = life360(authorization_token=authorization_token, username=username, password=password)
+		"""
+		Validate API authentication.
+		If authorization_token is provided, use it as Bearer token.
+		Otherwise, try username/password (legacy - may not work due to Cloudflare).
+		"""
 		try:
+			if authorization_token and authorization_token.strip():
+				# Use as bearer access token
+				self.logger.debug("Validating with Bearer Token")
+				api = SyncLife360(access_token=authorization_token.strip(), logger=self.logger)
+			elif username and password:
+				# Use username/password method (legacy)
+				self.logger.debug("Validating with Username/Password")
+				# Note: This may not work due to Cloudflare blocking
+				api = SyncLife360(username=username, password=password, logger=self.logger)
+			else:
+				self.logger.debug("No credentials provided")
+				return False
+			
 			if api.authenticate():
-				self.logger.debug("Validation of API was successful")
-				return True
+				# Try to get circles to verify the token works
+				try:
+					circles = api.get_circles()
+					self.logger.debug("Validation of API was successful")
+					return True
+				except Exception as e:
+					self.logger.debug("Error getting circles during validation: " + str(e))
+					return False
 			else:
 				self.logger.debug("Validation of API FAILED")
 				return False
 		except Exception as e:
-			self.logger.debug("Error authenticating: " + e.msg)
+			self.logger.debug("Error authenticating: " + str(e))
 			return False
 
 
@@ -278,12 +335,19 @@ class Plugin(indigo.PluginBase):
 
 	def get_new_life360json(self):
 		try:
-
-			api = life360(authorization_token=self.authorization_token, username=self.username, password=self.password)
-		except Exception as g:
-				self.logger.error(str(g))
-				self.logger.error("Error retrieving new Life360 JSON")
+			# Use authorization_token as bearer token if available, otherwise fall back to username/password
+			if self.authorization_token and self.authorization_token.strip():
+				api = SyncLife360(access_token=self.authorization_token.strip(), logger=self.logger)
+			elif self.username and self.password:
+				api = SyncLife360(username=self.username, password=self.password, logger=self.logger)
+			else:
+				self.logger.error("No authentication credentials configured")
 				return
+		except Exception as g:
+			self.logger.error(str(g))
+			self.logger.error("Error creating Life360 API object")
+			return
+			
 		if api.authenticate():
 			try:
 				self.logger.debug("Attempting to get list of circles and places")
@@ -297,6 +361,7 @@ class Plugin(indigo.PluginBase):
 				self.create_places_list()
 			except Exception as e:
 				self.logger.error(str(e))
+				self.logger.error("Error retrieving circles/places data")
 		else:
 			self.logger.error("Error retrieving new Life360 JSON, Make sure you have the correct credentials in Plugin Config")
 		return
@@ -567,9 +632,3 @@ class Plugin(indigo.PluginBase):
 			pass
 
 		return
-
-
-
-
-
-	

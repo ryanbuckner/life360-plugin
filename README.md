@@ -11,6 +11,10 @@
 ## life360-indigo-plugin for Python3.10
 This Indigo Plugin provides a way to connect Indigo to your Life360.com family tracking information. This plugin is only supported for [Indigo Domotics Software ](http://www.indigodomo.com)
 
+### Updated for CloudFlare
+This plugin has been updated to use the CloudFlare authentication from pnbruckner/ha-life360
+
+
 ### What is Life360?
 
 Life360 is a mobile application referred to as a "family-oriented private social network". The app is a social network for families and differentiates itself in this way as it is not based around peer groups or professional networks such as Find My Friends and LinkedIn. It allows users to share locations, group messages, and call for roadside assistance. It has four main features: location sharing, circles, places, and premium.
