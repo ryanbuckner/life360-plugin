@@ -1,4 +1,77 @@
-"""Synchronous wrapper for Life360 async API."""
+def get_circles(self, retry=True):
+        """
+        Get list of circles with optional extended retry for 403/429 errors.
+        
+        Args:
+            retry: If True, will retry indefinitely with 5-min delays (background).
+                  If False, will do limited retries with 1-min delays (startup).
+        
+        Matches ha-life360 retry strategy:
+        - Startup: Max 30 retries with 60-second delays (~30 minutes)
+        - Background: Unlimited retries with 300-second delays (5 minutes)
+        """
+        if not self.access_token:
+            raise Exception("Must authenticate first")
+        
+        if retry:
+            # Background mode: Unlimited retries with 5-minute delays
+            max_attempts = 100  # Effectively unlimited
+            wait_time = 300  # 5 minutes (LOGIN_ERROR_RETRY_DELAY)
+            mode = "background"
+        else:
+            # Startup mode: Limited retries with 1-minute delays
+            max_attempts = 30  # MAX_LTD_LOGIN_ERROR_RETRIES
+            wait_time = 60  # 1 minute (LTD_LOGIN_ERROR_RETRY_DELAY)
+            mode = "startup"
+        
+        for attempt in range(1, max_attempts + 1):
+            try:
+                async def _get_circles():
+                    connector = TCPConnector(limit=30, limit_per_host=10)
+                    async with ClientSession(connector=connector) as session:
+                        api = Life360(
+                            session, 
+                            max_retries=3,
+                            authorization=f"Bearer {self.access_token}",
+                            verbosity=0
+                        )
+                        return await api.get_circles()
+                
+                return self._run_async(_get_circles())
+                
+            except (LoginError, RateLimited) as e:
+                # 403 Forbidden or 429 Too Many Requests
+                if attempt < max_attempts:
+                    msg = (
+                        f"Got {type(e).__name__} error on {mode} attempt {attempt}/{max_attempts}. "
+                        f"This is expected - Life360 heavily rate-limits Circle requests. "
+                        f"Retrying in {wait_time} seconds ({wait_time//60} minutes)..."
+                    )
+                    if self.logger:
+                        self.logger.info(msg)
+                    else:
+                        print(msg)
+                    
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    total_time = (max_attempts * wait_time) // 60
+                    msg = (
+                        f"Failed after {max_attempts} attempts over ~{total_time} minutes on {mode}. "
+                        "Will retry on next cycle."
+                    )
+                    if self.logger:
+                        self.logger.warning(msg)
+                    else:
+                        print(msg)
+                    raise
+            except Exception as e:
+                msg = f"Unexpected error: {type(e).__name__}: {str(e)}"
+                if self.logger:
+                    self.logger.error(msg)
+                else:
+                    print(msg)
+                raise"""Synchronous wrapper for Life360 async API."""
 import asyncio
 import time
 from aiohttp import ClientSession, TCPConnector
@@ -8,7 +81,7 @@ from life360.exceptions import LoginError, RateLimited
 
 
 class SyncLife360:
-    """Synchronous wrapper for Life360 API. Testing"""
+    """Synchronous wrapper for Life360 API."""
     
     def __init__(self, access_token=None, username=None, password=None, logger=None):
         """
@@ -65,18 +138,27 @@ class SyncLife360:
         except Exception:
             return False
     
-    def get_circles(self):
+    def get_circles(self, retry=True):
         """
-        Get list of circles with extended retry for 403/429 errors.
+        Get list of circles with optional extended retry for 403/429 errors.
+        
+        Args:
+            retry: If True, will retry with long delays (for background updates).
+                  If False, will fail fast after 2-3 quick attempts (for startup).
         
         Based on ha-life360 research: Can take 45+ minutes with 10-minute delays.
-        Retries indefinitely as per the working integration.
         """
         if not self.access_token:
             raise Exception("Must authenticate first")
         
-        max_attempts = 20  # Increased from 5 to 20 for longer retry window
-        base_wait = 60  # Changed from 30 to 60 seconds base delay
+        if retry:
+            # Background mode: Long retries for eventual success
+            max_attempts = 20
+            base_wait = 60
+        else:
+            # Startup mode: Fail fast so plugin doesn't hang
+            max_attempts = 2
+            base_wait = 5
         
         for attempt in range(1, max_attempts + 1):
             try:
@@ -88,7 +170,7 @@ class SyncLife360:
                             session, 
                             max_retries=3,  # Internal retries for server errors (502/503/504)
                             authorization=f"Bearer {self.access_token}",
-                            verbosity=1
+                            verbosity=0
                         )
                         return await api.get_circles()
                 
@@ -97,11 +179,15 @@ class SyncLife360:
             except (LoginError, RateLimited) as e:
                 # 403 Forbidden or 429 Too Many Requests
                 if attempt < max_attempts:
-                    # Exponential backoff up to 10 minutes as per research
-                    # 60s, 120s, 240s, 480s (8min), 600s (10min), then stays at 600s
-                    wait_time = min(base_wait * (2 ** (attempt - 1)), 600)
+                    if retry:
+                        # Background mode: Exponential backoff up to 10 minutes
+                        wait_time = min(base_wait * (2 ** (attempt - 1)), 600)
+                        msg = f"Got {type(e).__name__} error on attempt {attempt}/{max_attempts}. This is expected - Life360 heavily rate-limits Circle requests. Retrying in {wait_time} seconds ({wait_time//60} minutes)..."
+                    else:
+                        # Startup mode: Quick retries
+                        wait_time = base_wait
+                        msg = f"Got {type(e).__name__} error on startup attempt {attempt}/{max_attempts}. Will retry quickly then give up to avoid blocking plugin startup."
                     
-                    msg = f"Got {type(e).__name__} error on attempt {attempt}/{max_attempts}. This is expected - Life360 heavily rate-limits Circle requests. Retrying in {wait_time} seconds ({wait_time//60} minutes)..."
                     if self.logger:
                         self.logger.info(msg)
                     else:
@@ -110,9 +196,13 @@ class SyncLife360:
                     time.sleep(wait_time)
                     continue
                 else:
-                    msg = f"Failed after {max_attempts} attempts over ~{sum(min(base_wait * (2 ** (i - 1)), 600) for i in range(1, max_attempts))//60} minutes. The integration may need even more time. Try increasing max_attempts or wait and retry later."
+                    if retry:
+                        msg = f"Failed after {max_attempts} attempts over ~{sum(min(base_wait * (2 ** (i - 1)), 600) for i in range(1, max_attempts))//60} minutes. The integration may need even more time. Try increasing max_attempts or wait and retry later."
+                    else:
+                        msg = f"Failed quickly after {max_attempts} attempts on startup. Will schedule background retry with longer delays."
+                    
                     if self.logger:
-                        self.logger.error(msg)
+                        self.logger.error(msg) if retry else self.logger.warning(msg)
                     else:
                         print(msg)
                     raise
@@ -135,8 +225,7 @@ class SyncLife360:
                 api = Life360(
                     session,
                     max_retries=3,
-                    authorization=f"Bearer {self.access_token}",
-                    verbosity=1
+                    authorization=f"Bearer {self.access_token}"
                 )
                 return await api.get_circle(circle_id)
         
@@ -153,8 +242,7 @@ class SyncLife360:
                 api = Life360(
                     session,
                     max_retries=3,
-                    authorization=f"Bearer {self.access_token}",
-                    verbosity=1
+                    authorization=f"Bearer {self.access_token}"
                 )
                 return await api.get_circle_places(circle_id)
         

@@ -4,7 +4,7 @@
 # Copyright (c) 2021 ryanbuckner 
 # https://github.com/ryanbuckner/life360-plugin/wiki
 #
-# Based on neilk's Solcast plugin and updated in Home Assistant 
+# Based on neilk's Solcast plugin
 
 ################################################################################
 # Imports
@@ -12,6 +12,7 @@
 import indigo
 import re
 import sys
+import os
 from sync_life360 import SyncLife360
 import datetime
 try:
@@ -43,11 +44,72 @@ class Plugin(indigo.PluginBase):
 		self.deviceList = []
 		self.geoDeviceList = []
 
+		# Setup cache directory
+		self.pluginprefDirectory = '{}/Preferences/Plugins/com.ryanbuckner.indigoplugin.life360'.format(indigo.server.getInstallFolderPath())
+		self.path = self.pluginprefDirectory + "/"
+		self.cache_file = self.path + "life360_cache.json"
+		
+		# Debug: log paths and directory details so we can see exactly where it's looking
+		try:
+			plugin_dir = os.path.dirname(os.path.abspath(__file__))
+			install_dir = indigo.server.getInstallFolderPath()
+			self.logger.info(f"[Life360 Debug] Plugin file path: {plugin_dir}")
+			self.logger.info(f"[Life360 Debug] Indigo install folder: {install_dir}")
+			self.logger.info(f"[Life360 Debug] Expected plugin prefs directory: {self.pluginprefDirectory}")
+			self.logger.info(f"[Life360 Debug] Expected cache file path: {self.cache_file}")
+
+			# Show whether the prefs directory exists and list contents if it does
+			if os.path.exists(self.pluginprefDirectory):
+				self.logger.info(f"[Life360 Debug] Preferences directory exists: {self.pluginprefDirectory}")
+				try:
+					entries = os.listdir(self.pluginprefDirectory)
+					if entries:
+						self.logger.debug(f"[Life360 Debug] Preferences directory contents ({len(entries)} entries):")
+						for e in entries:
+							try:
+								fullp = os.path.join(self.pluginprefDirectory, e)
+								if os.path.isfile(fullp):
+									size = os.path.getsize(fullp)
+									self.logger.debug(f"[Life360 Debug]   {e}  (file, {size} bytes)")
+								elif os.path.isdir(fullp):
+									self.logger.debug(f"[Life360 Debug]   {e}  (directory)")
+								else:
+									self.logger.debug(f"[Life360 Debug]   {e}  (other)")
+							except Exception as _e:
+								self.logger.debug(f"[Life360 Debug]   {e}  (could not stat: {_e})")
+					else:
+						self.logger.warning(f"[Life360 Debug] Preferences directory is empty: {self.pluginprefDirectory}")
+				except Exception as e:
+					self.logger.error(f"[Life360 Debug] Error listing preferences directory: {e}")
+			else:
+				self.logger.warning(f"[Life360 Debug] Preferences directory does NOT exist: {self.pluginprefDirectory}")
+
+			# Show whether the cache file exists and its size if present
+			if os.path.exists(self.cache_file):
+				try:
+					csize = os.path.getsize(self.cache_file)
+					self.logger.info(f"[Life360 Debug] Cache file FOUND at: {self.cache_file} ({csize} bytes)")
+				except Exception as e:
+					self.logger.info(f"[Life360 Debug] Cache file FOUND at: {self.cache_file} (could not get size: {e})")
+			else:
+				self.logger.info(f"[Life360 Debug] Cache file NOT FOUND at: {self.cache_file}")
+		except Exception as e:
+			self.logger.error(f"[Life360 Debug] Error during path/debug diagnostics: {e}")
+
+		# Create directory if it doesn't exist
+		if not os.path.exists(self.pluginprefDirectory):
+			try:
+				os.makedirs(self.pluginprefDirectory)
+				self.logger.info(f"[Life360 Debug] Created preferences directory: {self.pluginprefDirectory}")
+			except Exception as e:
+				self.logger.error(f"[Life360 Debug] Failed creating preferences directory {self.pluginprefDirectory}: {e}")
+
 		try:
 			# Authorization token from plugin prefs
 			# This now stores the Bearer access token (obtained from browser)
 			self.authorization_token = self.pluginPrefs.get('authorizationtoken', None)
-			self.authorization_token = "MzM2YjA5MDYtOTEwNC00M2RiLTgxZWMtMzE2MGUyODgyMGQ4"
+			# HARDCODED TOKEN FOR TESTING
+			self.authorization_token = "MzQ5Y2U0MTctOTQxZi00N2Q2LWI2NjItMGQ1ZmI1MzU1N2Ey"
 			
 			# Username/password (optional - for legacy support)
 			self.username = self.pluginPrefs.get('life360_username', None)
@@ -82,6 +144,9 @@ class Plugin(indigo.PluginBase):
 		self.placesdata = {}
 		self.member_list = {}
 		self.places_list = {}
+		
+		# Load cached data on startup
+		self.load_cache()
 
 
 	########################################
@@ -114,14 +179,38 @@ class Plugin(indigo.PluginBase):
 
 		self.logger.debug("Current polling frequency is: " + str(pollingFreq) + " seconds")
 
-		# Refresh device states immediately after restarting the Plugin
+		# On first iteration, try quickly without long retries so plugin starts fast
+		# If that fails, schedule a background retry with long delays
 		iterationcount = 1
+		needs_background_retry = False
 
 		try:
 			while True:
 				if (iterationcount > 1):
 					self.sleep(1 * pollingFreq)
-				self.get_new_life360json()
+				
+				# On first iteration, try without long retries
+				if iterationcount == 1:
+					success = self.get_new_life360json(retry_on_startup=False)
+					if not success:
+						self.logger.warning(
+							"Could not retrieve Circles & Members on startup. "
+							"Will retry in background with longer delays. "
+							"Devices will update once data is retrieved."
+						)
+						needs_background_retry = True
+				# If we need background retry, do it with long retry delays
+				elif needs_background_retry:
+					self.logger.info("Starting background retry for Circles & Members with extended delays...")
+					success = self.get_new_life360json(retry_on_startup=True)
+					if success:
+						self.logger.warning("Background retry succeeded - Circles & Members retrieved")
+						needs_background_retry = False
+					# If still failing after background retry, will try again next cycle
+				# Normal periodic updates
+				else:
+					self.get_new_life360json(retry_on_startup=False)
+				
 				iterationcount += 1
 				self.logger.debug(self.deviceList)
 				for deviceId in self.deviceList:
@@ -319,6 +408,59 @@ class Plugin(indigo.PluginBase):
 			return False
 
 
+	def load_cache(self):
+		"""Load cached Life360 data from disk if available."""
+		import json
+		import os
+		
+		self.logger.info(f"[Life360 Debug] load_cache checking for cache file at: {self.cache_file}")
+		if not os.path.exists(self.cache_file):
+			self.logger.info("[Life360 Debug] No cache file found - will need to retrieve data from Life360")
+			return False
+		
+		try:
+			with open(self.cache_file, 'r') as f:
+				cache_data = json.load(f)
+			
+			self.life360data = cache_data.get('life360data', {})
+			self.placesdata = cache_data.get('placesdata', {})
+			self.member_list = cache_data.get('member_list', {})
+			self.places_list = cache_data.get('places_list', {})
+			
+			if self.life360data and self.member_list:
+				self.logger.info("Successfully loaded cached Life360 data from previous session")
+				self.create_member_list()
+				self.create_places_list()
+				return True
+			else:
+				self.logger.info("Cache file exists but contains no data")
+				return False
+		except Exception as e:
+			self.logger.error(f"Error loading cache: {str(e)}")
+			return False
+	
+	def save_cache(self):
+		"""Save Life360 data to disk cache."""
+		import json
+		
+		try:
+			cache_data = {
+				'life360data': self.life360data,
+				'placesdata': self.placesdata,
+				'member_list': self.member_list,
+				'places_list': self.places_list
+			}
+			
+			with open(self.cache_file, 'w') as f:
+				json.dump(cache_data, f, indent=2)
+			
+			self.logger.debug("Successfully saved Life360 data to cache")
+			return True
+		except Exception as e:
+			self.logger.error(f"Error saving cache: {str(e)}")
+			return False
+
+
 	def get_member_list(self, filter="", valuesDict=None, typeId="", targetId=0):
 		if (len(self.member_list) == 0):
 			self.create_member_list()
@@ -333,7 +475,14 @@ class Plugin(indigo.PluginBase):
 		return retList
 
 
-	def get_new_life360json(self):
+	def get_new_life360json(self, retry_on_startup=False):
+		"""
+		Get Life360 circles and member data.
+		
+		Args:
+			retry_on_startup: If True, will do long retries (for background updates).
+							 If False, will fail fast and return quickly (for startup).
+		"""
 		try:
 			# Use authorization_token as bearer token if available, otherwise fall back to username/password
 			if self.authorization_token and self.authorization_token.strip():
@@ -342,16 +491,16 @@ class Plugin(indigo.PluginBase):
 				api = SyncLife360(username=self.username, password=self.password, logger=self.logger)
 			else:
 				self.logger.error("No authentication credentials configured")
-				return
+				return False
 		except Exception as g:
 			self.logger.error(str(g))
 			self.logger.error("Error creating Life360 API object")
-			return
+			return False
 			
 		if api.authenticate():
 			try:
 				self.logger.debug("Attempting to get list of circles and places")
-				circles = api.get_circles()
+				circles = api.get_circles(retry=retry_on_startup)
 				id = circles[0]['id']
 				circle = api.get_circle(id)
 				places = api.get_circle_places(id)
@@ -359,12 +508,18 @@ class Plugin(indigo.PluginBase):
 				self.placesdata = places
 				self.create_member_list()
 				self.create_places_list()
+				
+				# Save to cache on success
+				self.save_cache()
+				
+				return True
 			except Exception as e:
 				self.logger.error(str(e))
 				self.logger.error("Error retrieving circles/places data")
+				return False
 		else:
 			self.logger.error("Error retrieving new Life360 JSON, Make sure you have the correct credentials in Plugin Config")
-		return
+			return False
 
 
 	def create_member_list(self):
