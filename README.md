@@ -7,9 +7,13 @@
 ![Releases](https://img.shields.io/github/release-date/ryanbuckner/life360-plugin?color=red&label=latest%20release)
 
 
-# Life360 Plugin for Indigo Domotics Home Automation 
-## life360-indigo-plugin
+# Life360 Plugin for Indigo Domotics Home Automation
+## life360-indigo-plugin for Python3.10
 This Indigo Plugin provides a way to connect Indigo to your Life360.com family tracking information. This plugin is only supported for [Indigo Domotics Software ](http://www.indigodomo.com)
+
+### Updated for CloudFlare
+This plugin has been updated to use the CloudFlare authentication from pnbruckner/ha-life360. It is not yet working
+
 
 ### What is Life360?
 
@@ -46,7 +50,7 @@ This plugin is not endorsed or associated with Life360
 
 1) Support for only 1 Circle. This must be the first Circle in your account
 2) Multiple devices that each represent users in your Circle
-3) Custom device states
+3) Custom device states of the member device
   - Unique Member ID 
   - First Name
   - Last Name
@@ -62,52 +66,58 @@ This plugin is not endorsed or associated with Life360
   - Wifi turn on or not
   - Is Driving (boolean determined by speed)
   - Speed (raw Life360 speed * 2.2)
+  - Speed (in kph)
   - Location Since Timestamp
   - Last API update 
+4) Custom device states of the Life360 Custom Geofence
+  - Occupied
+  - Number of Members in Geofence 
+  - Members in Geofence
+  - Last Update Timestamp
+  - First Entered Timestamp
+  - Last Exited Timestamp 
 
 #### Installation
 
-Download the `life360.indigoPlugin` file and double-click it to install.
+Download the Life360.indigoPlugin file and double click it
 
-> **Note:** This plugin requires Indigo 2022.1 or later running Python 3.
+###### Plugin Config 
+- configure the Plugin by entering:
+  - Username: your life360 username (email address). Any account holder in the Circle can use their account. If you don't have a username or password, you can initiate a password change in the app 
+  - Password: your life360 password
+  - Authentication Token: Leave this value alone
+  - Refresh Rate: This is the time (in seconds) between API calls to refresh device states. It's recommended to keep this rate at 15 seconds or more
 
-###### Plugin Config
+The Plugin Config Dialog should not close unless your username and password are authenticated.  Check the Event Log for any errors. 
 
-Open the plugin's configuration dialog (Plugins → Life360 → Configure...) and enter:
+###### Device Config 
+- create a new device of Type life360
+  - model should be life360 Circle Member 
+  - Name your device anything you want. It's preferred to use something indicating the name of the person your device represents
+  - Press Edit Device Settings... 
+  - Choose the member that this device will represent from the dropdown list. If there is nothing in the dropdown, there maybe a problem with your username and password. Check the event log
 
-- **Username:** Your Life360 account email address. Any Circle member's account works. If you don't have a password, use the Life360 app to initiate a password reset.
-- **Password:** Your Life360 account password.
-- **Refresh Rate:** Time in seconds between API calls to update device states. Minimum is 15 seconds; 30–60 seconds is recommended to avoid rate limiting by Life360's servers.
+###### Geofence Device Config 
+- create a new device of Type Life360 
+  - model should be Life360 Custom Geofence
+  - The geofence is a circle conprised of a center and a perimeter based on the radius (in Km) you enter
+  - You have the option to pre-populate the name, latitude, longitude, and radius from predefined Life360 app Places definition. Check the box that says "Use Life 360 Places". Choose the place from the dropdown and press the "populate" button
+  - The Geofence radius is defined in Kilometers. If you decide to use the Places option, it will be covered for you. If not, use the tool to convert from feet to Km
+  - You can create a temporary geofence using the current location of a member. Create through the plugin menu 
 
-> **Authentication Token:** This field is no longer needed and can be left at its default value. The plugin now uses the current Life360 API authentication mechanism automatically.
-
-The Plugin Config dialog will not close unless your credentials are successfully authenticated. Check the Indigo Event Log for error details if the dialog does not close.
-
-###### Device Config
-
-1. In Indigo, create a new device (Devices → New...)
-2. Set **Type** to `Life360` and **Model** to `Life360 Circle Member`
-3. Name the device — using the person's name is recommended (e.g. "Ryan - Life360")
-4. Click **Edit Device Settings...**
-5. Choose the Circle member this device will represent from the dropdown list
-   - If the dropdown is empty, there is likely a credential problem — check the Event Log
-
-Each device represents one Life360 Circle member and tracks the states listed above.
 
 ### Cautions:
 
-This plugin is not endorsed by or affiliated with Life360.
+I am not an expert on Life360. 
 
-The Life360 API is unofficial and undocumented. Life360 has made breaking API changes in the past; if the plugin stops working, check this repository for updates.
-
-Usage is at your own risk.
+By using this version you are joining the testing team, thanks for the help.   I would love to hear your feedback and thoughts.
 
 ### Troubleshooting:
 
-- **Authentication fails:** Life360 changed their API in 2024. Make sure you are running the latest version of this plugin, which uses the updated `api-cloudfront.life360.com` endpoint and current client token.
-- **Dropdown is empty in Device Config:** Your credentials may be incorrect, or the API call to fetch circle members failed. Check the Event Log and verify your username and password in Plugin Config.
-- **member_is_driving is always 0:** This is expected. The raw `isDriving` field from Life360 is unreliable and always returns 0. The plugin derives driving status from speed instead — any speed above 1 (after conversion) sets `member_is_driving` to true.
-- **Speed looks wrong:** The raw Life360 speed value is approximately MPH ÷ 2.2. The plugin multiplies it back by 2.2 to estimate MPH. Values of -1 or 0 mean the member is not moving fast enough to register.
-- **Name change not reflected:** If a member changes their name in Life360, open the Indigo device settings and reselect them from the dropdown to re-sync the member ID.
-- **Location shows "-geocoder error-":** Reverse geocoding uses the Nominatim service (OpenStreetMap). Occasional failures are normal; the state will update on the next successful poll.
-- **The plugin will skip all updates** for devices mapped to a member who has disabled or paused location sharing.
+- If someone changes their name in Life360, you will have to go into their device and reselect them from the dropdown if you make any other changes to the device.
+- member_is_driving is now a derived boolean based on the Life360 speed for that member. The raw isDriving status is always returned as 0, so it's ignored
+- The Life360 raw speed is a number that appears to be the actual speed in MPH divided by 2.2. This plugin attempts to correct that, but it's an estimate. -1 or 0 means not moving fast enough to register
+- The plugin will skip all updates for devices mapped to someone who has disabled or paused location sharing 
+
+
+
