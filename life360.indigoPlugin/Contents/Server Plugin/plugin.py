@@ -41,7 +41,7 @@ class Plugin(indigo.PluginBase):
 		self.deviceList = []
 
 		try:
-			self.authorization_token = self.pluginPrefs.get('authorizationtoken', 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRUh1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg')
+			self.authorization_token = self.pluginPrefs.get('authorizationtoken', 'Y2F0aGFwYWNyQVBoZUtVc3RlOGV2ZXZldnVjSGFmZVRydVl1ZnJhYzpkOEM5ZVlVdkE2dUZ1YnJ1SmVnZXRyZVZ1dFJlQ1JVWQ==')
 			self.username = self.pluginPrefs.get('life360_username', None)
 			self.password = self.pluginPrefs.get('life360_password', None)
 			self.refresh_frequency = self.pluginPrefs.get('refresh_frequency', 30)
@@ -286,8 +286,8 @@ class Plugin(indigo.PluginBase):
 			if self.life360data['members']:
 				pass
 		except Exception as m:
-			self.logger.error("Life360 error when parsing JSON: " + str(m))
-			self.logger.error(self.life360data)
+			self.logger.debug("Life360 error when parsing JSON: " + str(m))
+			self.logger.info("Life360 JSON file unreadable. Skipping...")
 			return
 
 
@@ -349,8 +349,7 @@ class Plugin(indigo.PluginBase):
 					if (m['location']['name'] == "Home"):
 						device.updateStateImageOnServer(indigo.kStateImageSel.MotionSensorTripped)
 					else:
-						#device.updateStateImageOnServer(indigo.kStateImageSel.None)
-						getattr(indigo.kStateImageSel, "NoImage", getattr(indigo.kStateImageSel, "None", ""))
+						device.updateStateImageOnServer(indigo.kStateImageSel.NoImage)
 		
 			device.updateStatesOnServer(device_states)
 
