@@ -42,9 +42,9 @@ More information can be found about Life360 [here](https://www.life360.com/suppo
 
 ### The Life360 Plugin
 
-The plugin is my first attempt at an Indigo plugin, based on a script I wrote to update variables in Indigo. The Life360 api example was leveraged from the work done by [harperreed](https://github.com/harperreed/life360-python) 
+The plugin is my first attempt at an Indigo plugin, based on a script I wrote to update variables in Indigo. The Life360 API client is based on the work done by [pnbruckner](https://github.com/pnbruckner/ha-life360).
 
-More informaton will be listed [on the GitHub Wiki](https://github.com/ryanbuckner/life360-plugin/wiki)
+More information will be listed [on the GitHub Wiki](https://github.com/ryanbuckner/life360-plugin/wiki)
 
 This plugin is not endorsed or associated with Life360 
 
@@ -83,17 +83,21 @@ This plugin is not endorsed or associated with Life360
 
 Download the `life360.indigoPlugin` file and double-click it to install.
 
-> **Note:** This plugin requires Indigo 2022.1 or later running Python 3.
+> **Note:** This plugin requires Indigo 2022.1 or later running Python 3.11.
 
 ###### Plugin Config
 
 Open the plugin's configuration dialog (Plugins → Life360 → Configure...) and enter:
 
-- **Username:** Your Life360 account email address. Any Circle member's account works. If you don't have a password, use the Life360 app to initiate a password reset.
-- **Password:** Your Life360 account password.
 - **Refresh Rate:** Time in seconds between API calls to update device states. Minimum is 15 seconds; 30–60 seconds is recommended to avoid rate limiting by Life360's servers.
 
-> **Authentication Token:** This field is no longer needed and can be left at its default value. The plugin now uses the current Life360 API authentication mechanism automatically.
+**Authentication — two options (Bearer Token is preferred):**
+
+- **Authorization Token (recommended):** A Bearer access token extracted directly from the Life360 website. To obtain it: log into [life360.com](https://life360.com/login) in a browser, open Developer Tools → Network tab, complete the login, find the POST request to `oauth2/token`, and copy the `access_token` value from the response. Paste just the token value here (without the `"Bearer "` prefix, though the plugin handles it either way).
+
+- **Username / Password (legacy fallback):** Your Life360 account email and password. This method may fail on accounts with a verified phone number, as Life360's servers block this login flow via Cloudflare. If the Bearer Token method is available, prefer it.
+
+You only need to fill in one method. If both are provided, the Bearer Token takes priority.
 
 The Plugin Config dialog will not close unless your credentials are successfully authenticated. Check the Indigo Event Log for error details if the dialog does not close.
 
@@ -127,7 +131,7 @@ Usage is at your own risk.
 ### Troubleshooting:
 
 - **Authentication fails:** Life360 changed their API in 2024. Make sure you are running the latest version of this plugin, which uses the updated `api-cloudfront.life360.com` endpoint and current client token.
-- **Dropdown is empty in Device Config:** Your credentials may be incorrect, or the API call to fetch circle members failed. Check the Event Log and verify your username and password in Plugin Config.
+- **Dropdown is empty in Device Config:** Your credentials may be incorrect, or the API call to fetch circle members failed. Check the Event Log and verify your Bearer Token (or username and password) in Plugin Config.
 - **member_is_driving is always 0:** This is expected. The raw `isDriving` field from Life360 is unreliable and always returns 0. The plugin derives driving status from speed instead — any speed above 1 (after conversion) sets `member_is_driving` to true.
 - **Speed looks wrong:** The raw Life360 speed value is approximately MPH ÷ 2.2. The plugin multiplies it back by 2.2 to estimate MPH. Values of -1 or 0 mean the member is not moving fast enough to register.
 - **Name change not reflected:** If a member changes their name in Life360, open the Indigo device settings and reselect them from the dropdown to re-sync the member ID.
