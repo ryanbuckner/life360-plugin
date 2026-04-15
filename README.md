@@ -14,6 +14,30 @@ This Indigo Plugin provides a way to connect Indigo to your Life360.com family t
 ### Updated for CloudFlare
 This plugin has been updated to use the CloudFlare authentication from pnbruckner/ha-life360.
 
+---
+
+### Changelog
+
+#### April 2026 — Auth & reliability fixes
+
+**Auth: double "Bearer" prefix bug fixed** (`sync_life360.py`)
+If a user pasted a full `"Bearer xyz123"` string into the Authorization Token field, the plugin was prepending `"Bearer "` a second time when constructing API calls, resulting in a `401 Unauthorized` error. The token is now normalized on initialization — the `"Bearer "` prefix is stripped if present, so both `xyz123` and `Bearer xyz123` work correctly.
+
+**Retry sleep capped at 120 seconds** (`sync_life360.py`)
+Background retry mode used exponential backoff with a ceiling of 600 seconds (10 minutes) per attempt. Since Python's `time.sleep()` cannot be interrupted by Indigo's stop signal, the concurrent thread could hang for up to 10 minutes on plugin shutdown. The per-attempt cap is now 120 seconds.
+
+**`_HEADERS` dict mutation fixed** (`life360/api.py`)
+`headers = _HEADERS` was an alias to the module-level dict, so each API call permanently added `authorization` and `if-none-match` keys to the shared dict. Changed to `headers = dict(_HEADERS)` so the module-level constant is never modified.
+
+**`deviceStartComm` now calls `super()`** (`plugin.py`)
+Indigo's plugin lifecycle documentation requires `deviceStartComm` to call `super().deviceStartComm(dev)`. The call was missing and has been added.
+
+**Plugin Config defaults and UI fixes** (`PluginConfig.xml`)
+- Default `refresh_frequency` was `5` seconds, but validation rejects values under 15 — fresh installs could not save preferences. Default is now `30`.
+- Password field now uses `secure="true"` to mask input.
+- Authorization Token field description was replaced with clear instructions for obtaining a Bearer token from the Life360 website via browser Developer Tools.
+
+---
 
 ### What is Life360?
 

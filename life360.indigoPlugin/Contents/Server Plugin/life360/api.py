@@ -229,7 +229,7 @@ class Life360:
         if authorization is None:
             raise LoginError("Must login")
 
-        headers = _HEADERS
+        headers = dict(_HEADERS)  # copy so we don't mutate the module-level dict
         if authorization != "":
             headers["authorization"] = authorization
         if raise_not_modified and (etag := self._etags.get(url)):

@@ -15,12 +15,17 @@ class SyncLife360:
         Initialize synchronous Life360 client.
 
         Args:
-            access_token: Bearer access token (preferred method)
+            access_token: Bearer access token (preferred method); "Bearer " prefix is
+                          stripped automatically so users can paste either the raw token
+                          or the full "Bearer <token>" string from the browser.
             username: Life360 username (legacy)
             password: Life360 password (legacy)
             logger: Logger instance for output
         """
-        self.access_token = access_token
+        # Normalize: strip "Bearer " prefix so get_circles() can safely add it back
+        if access_token and access_token.strip().startswith("Bearer "):
+            access_token = access_token.strip()[len("Bearer "):]
+        self.access_token = access_token.strip() if access_token else access_token
         self.username = username
         self.password = password
         self.logger = logger
@@ -79,13 +84,17 @@ class SyncLife360:
             raise Exception("Must authenticate first")
 
         if retry:
-            # Background mode: Long retries for eventual success
+            # Background mode: Long retries for eventual success.
+            # Per-attempt sleep is capped at 120s so Indigo's StopThread can
+            # interrupt the concurrent thread within a reasonable time window.
             max_attempts = 20
             base_wait = 60
+            max_wait = 120
         else:
             # Startup mode: Fail fast so plugin doesn't hang
             max_attempts = 2
             base_wait = 5
+            max_wait = 10
 
         for attempt in range(1, max_attempts + 1):
             try:
@@ -106,8 +115,8 @@ class SyncLife360:
                 # 403 Forbidden or 429 Too Many Requests
                 if attempt < max_attempts:
                     if retry:
-                        # Background mode: Exponential backoff up to 10 minutes
-                        wait_time = min(base_wait * (2 ** (attempt - 1)), 600)
+                        # Background mode: Exponential backoff, capped at max_wait
+                        wait_time = min(base_wait * (2 ** (attempt - 1)), max_wait)
                         msg = (
                             f"Got {type(e).__name__} error on attempt {attempt}/{max_attempts}. "
                             f"This is expected - Life360 heavily rate-limits Circle requests. "
