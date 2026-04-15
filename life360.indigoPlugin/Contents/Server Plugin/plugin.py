@@ -106,10 +106,8 @@ class Plugin(indigo.PluginBase):
 
 		try:
 			# Authorization token from plugin prefs
-			# This now stores the Bearer access token (obtained from browser)
+			# This stores the Bearer access token (obtained from Life360 app/browser)
 			self.authorization_token = self.pluginPrefs.get('authorizationtoken', None)
-			# HARDCODED TOKEN FOR TESTING
-			self.authorization_token = "MzQ5Y2U0MTctOTQxZi00N2Q2LWI2NjItMGQ1ZmI1MzU1N2Ey"
 			
 			# Username/password (optional - for legacy support)
 			self.username = self.pluginPrefs.get('life360_username', None)
