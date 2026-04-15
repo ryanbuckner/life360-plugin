@@ -93,7 +93,14 @@ Open the plugin's configuration dialog (Plugins → Life360 → Configure...) an
 
 **Authentication — two options (Bearer Token is preferred):**
 
-- **Authorization Token (recommended):** A Bearer access token extracted directly from the Life360 website. To obtain it: log into [life360.com](https://life360.com/login) in a browser, open Developer Tools → Network tab, complete the login, find the POST request to `oauth2/token`, and copy the `access_token` value from the response. Paste just the token value here (without the `"Bearer "` prefix, though the plugin handles it either way).
+- **Authorization Token (recommended):** A Bearer access token extracted directly from the Life360 website. To obtain it:
+  1. Go to [https://life360.com/login](https://life360.com/login) in a browser
+  2. Open Developer Tools and switch to the **Network** tab (make sure recording is on)
+  3. Log into your Life360 account normally
+  4. In the Network tab, look for a request named **"token"** that uses the **POST** method and has response data — if you see one labeled "preflight" using OPTIONS with no data, ignore it and keep looking
+  5. Click the matching POST request and open the **Preview** or **Response** tab
+  6. Copy the `access_token` value
+  7. Paste it into this field — the `token_type` ("Bearer") is handled automatically by the plugin
 
 - **Username / Password (legacy fallback):** Your Life360 account email and password. This method may fail on accounts with a verified phone number, as Life360's servers block this login flow via Cloudflare. If the Bearer Token method is available, prefer it.
 
