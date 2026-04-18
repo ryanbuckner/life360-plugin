@@ -53,6 +53,7 @@ _RETRY_CLIENT_RESPONSE_ERRORS = (
     HTTP_Error.BAD_GATEWAY,
     HTTP_Error.SERVICE_UNAVAILABLE,
     HTTP_Error.GATEWAY_TIME_OUT,
+    HTTP_Error.SERVER_UNKNOWN_ERROR,  # Cloudflare 520
 )
 
 _URL_REDACTIONS = (re.compile(r"/(?:(?:circles)|(?:members))/(?!REDACTED)([\w-]+)"),)

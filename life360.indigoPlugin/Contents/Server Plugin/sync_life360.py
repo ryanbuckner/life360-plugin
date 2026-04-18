@@ -1,5 +1,6 @@
 """Synchronous wrapper for Life360 async API."""
 import asyncio
+import ssl
 import time
 from aiohttp import ClientSession, TCPConnector
 
@@ -8,192 +9,190 @@ from life360.exceptions import LoginError, RateLimited
 
 
 class SyncLife360:
-    """Synchronous wrapper for Life360 API."""
+    """
+    Synchronous wrapper for Life360 API.
+
+    Maintains a persistent event loop and ClientSession across calls so that
+    cookies and connection state are preserved between requests — matching the
+    behaviour of the HA life360 integration, which reuses one session for the
+    lifetime of the integration.  Recreate (or call close() then recreate) when
+    credentials change.
+    """
 
     def __init__(self, access_token=None, username=None, password=None, logger=None):
-        """
-        Initialize synchronous Life360 client.
-
-        Args:
-            access_token: Bearer access token (preferred method); "Bearer " prefix is
-                          stripped automatically so users can paste either the raw token
-                          or the full "Bearer <token>" string from the browser.
-            username: Life360 username (legacy)
-            password: Life360 password (legacy)
-            logger: Logger instance for output
-        """
-        # Normalize: strip "Bearer " prefix so get_circles() can safely add it back
+        # Normalize: strip "Bearer " prefix so every caller can safely prepend it
         if access_token and access_token.strip().startswith("Bearer "):
             access_token = access_token.strip()[len("Bearer "):]
         self.access_token = access_token.strip() if access_token else access_token
         self.username = username
         self.password = password
         self.logger = logger
-        self._session = None
 
-    def _run_async(self, coro):
-        """Run an async coroutine synchronously."""
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(coro)
-        finally:
-            loop.close()
+        # Persistent loop and session — created once, reused across all API calls
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        self._session = None   # created lazily inside the loop
+        self._api = None       # Life360 client, created once after auth
+
+    # ------------------------------------------------------------------
+    # Session / loop helpers
+    # ------------------------------------------------------------------
+
+    def _get_ssl_context(self):
+        """
+        Return an SSL context that is compatible with Life360 / Cloudflare.
+
+        HA 2026.2 switched back to an older-style SSLContext because the new
+        default upsets Cloudflare.  We mirror that by creating an explicit
+        context rather than letting aiohttp pick one.
+        """
+        ctx = ssl.create_default_context()
+        return ctx
+
+    async def _ensure_session(self):
+        """Return the shared ClientSession, creating it if necessary."""
+        if self._session is None or self._session.closed:
+            connector = TCPConnector(
+                ssl=self._get_ssl_context(),
+                limit=30,
+                limit_per_host=10,
+            )
+            self._session = ClientSession(connector=connector)
+        return self._session
+
+    def _run(self, coro):
+        """Run a coroutine on the persistent event loop."""
+        return self._loop.run_until_complete(coro)
+
+    def close(self):
+        """Close the session and event loop.  Call when credentials change."""
+        async def _close():
+            if self._session and not self._session.closed:
+                await self._session.close()
+        if not self._loop.is_closed():
+            self._run(_close())
+            self._loop.close()
+        self._session = None
+        self._api = None
+
+    # ------------------------------------------------------------------
+    # Authentication
+    # ------------------------------------------------------------------
 
     def authenticate(self):
-        """
-        Authenticate with Life360.
-
-        Returns True if already has access_token or successfully authenticates.
-        """
-        # If we already have an access token, we're good
+        """Return True if we have a usable access token."""
         if self.access_token:
             return True
-
-        # Otherwise try username/password (may not work due to Cloudflare)
         if not self.username or not self.password:
             return False
-
         try:
             async def _login():
-                connector = TCPConnector(limit=30, limit_per_host=10)
-                async with ClientSession(connector=connector) as session:
-                    api = Life360(session, max_retries=3)
-                    await api.login_by_username(self.username, self.password)
-                    return api.authorization
+                session = await self._ensure_session()
+                api = Life360(session, max_retries=3)
+                await api.login_by_username(self.username, self.password)
+                return api.authorization
 
-            self.access_token = self._run_async(_login())
-            # Remove "Bearer " prefix if present
-            if self.access_token and self.access_token.startswith("Bearer "):
-                self.access_token = self.access_token[7:]
+            auth = self._run(_login())
+            if auth and auth.startswith("Bearer "):
+                auth = auth[len("Bearer "):]
+            self.access_token = auth
             return True
         except Exception:
             return False
 
-    def get_circles(self, retry=True):
+    def _make_api(self):
+        """Return the shared Life360 API client (created once per session)."""
+        # The API object holds etags and other per-session state — reuse it.
+        return Life360(
+            self._session,          # session must already exist
+            max_retries=3,
+            authorization=f"Bearer {self.access_token}",
+        )
+
+    # ------------------------------------------------------------------
+    # Retry helper
+    # ------------------------------------------------------------------
+
+    def _call_with_retry(self, label, coro_fn, retry=True):
         """
-        Get list of circles with optional extended retry for 403/429 errors.
-
-        Args:
-            retry: If True, will retry with long delays (for background updates).
-                  If False, will fail fast after 2-3 quick attempts (for startup).
-
-        Based on ha-life360 research: Can take 45+ minutes with 10-minute delays.
+        Run coro_fn() with optional retry on 403/429.
+        coro_fn must be a zero-argument callable returning a coroutine.
         """
-        if not self.access_token:
-            raise Exception("Must authenticate first")
-
-        if retry:
-            # Background mode: Long retries for eventual success.
-            # Per-attempt sleep is capped at 120s so Indigo's StopThread can
-            # interrupt the concurrent thread within a reasonable time window.
-            max_attempts = 20
-            base_wait = 60
-            max_wait = 120
-        else:
-            # Startup mode: Fail fast so plugin doesn't hang
-            max_attempts = 2
-            base_wait = 5
-            max_wait = 10
+        max_attempts = 20 if retry else 2
+        base_wait   = 60  if retry else 5
+        max_wait    = 120 if retry else 10
 
         for attempt in range(1, max_attempts + 1):
             try:
-                async def _get_circles():
-                    connector = TCPConnector(limit=30, limit_per_host=10)
-                    async with ClientSession(connector=connector) as session:
-                        api = Life360(
-                            session,
-                            max_retries=3,
-                            authorization=f"Bearer {self.access_token}",
-                            verbosity=0
-                        )
-                        return await api.get_circles()
-
-                return self._run_async(_get_circles())
-
+                return self._run(coro_fn())
             except (LoginError, RateLimited) as e:
-                # 403 Forbidden or 429 Too Many Requests
+                reason = "rate-limited (429)" if isinstance(e, RateLimited) \
+                         else "temporarily blocked (403)"
                 if attempt < max_attempts:
-                    if retry:
-                        # Background mode: Exponential backoff, capped at max_wait
-                        wait_time = min(base_wait * (2 ** (attempt - 1)), max_wait)
-                        msg = (
-                            f"Got {type(e).__name__} error on attempt {attempt}/{max_attempts}. "
-                            f"This is expected - Life360 heavily rate-limits Circle requests. "
-                            f"Retrying in {wait_time} seconds ({wait_time//60} minutes)..."
-                        )
-                    else:
-                        # Startup mode: Quick retries
-                        wait_time = base_wait
-                        msg = (
-                            f"Got {type(e).__name__} error on startup attempt {attempt}/{max_attempts}. "
-                            "Will retry quickly then give up to avoid blocking plugin startup."
-                        )
-
-                    if self.logger:
-                        self.logger.info(msg)
-                    else:
-                        print(msg)
-
+                    # Clear cookies on 403 before retrying — HA does this too.
+                    # Stale Cloudflare cookies can cause persistent 403s; clearing
+                    # them forces fresh cookie negotiation on the next attempt.
+                    if isinstance(e, LoginError) and self._session and not self._session.closed:
+                        self._session.cookie_jar.clear()
+                    wait_time = min(base_wait * (2 ** (attempt - 1)), max_wait)
+                    msg = (f"{label} attempt {attempt}/{max_attempts}: "
+                           f"{reason}. Retrying in {wait_time}s...")
+                    (self.logger.info if self.logger else print)(msg)
                     time.sleep(wait_time)
-                    continue
                 else:
-                    if retry:
-                        total = sum(min(base_wait * (2 ** (i - 1)), 600) for i in range(1, max_attempts))
-                        msg = (
-                            f"Failed after {max_attempts} attempts over ~{total//60} minutes. "
-                            "The integration may need even more time. "
-                            "Try increasing max_attempts or wait and retry later."
-                        )
-                    else:
-                        msg = (
-                            f"Failed quickly after {max_attempts} attempts on startup. "
-                            "Will schedule background retry with longer delays."
-                        )
-
+                    msg = f"{label} failed after {max_attempts} attempts: {reason}."
                     if self.logger:
                         self.logger.error(msg) if retry else self.logger.warning(msg)
                     else:
                         print(msg)
                     raise
             except Exception as e:
-                msg = f"Unexpected error: {type(e).__name__}: {str(e)}"
-                if self.logger:
-                    self.logger.error(msg)
-                else:
-                    print(msg)
+                msg = f"{label} unexpected error: {type(e).__name__}: {e}"
+                (self.logger.error if self.logger else print)(msg)
                 raise
 
-    def get_circle(self, circle_id):
-        """Get circle details including members."""
+    # ------------------------------------------------------------------
+    # API calls — all share the same session and Life360 client
+    # ------------------------------------------------------------------
+
+    def get_circles(self, retry=True):
+        """Get list of circles."""
         if not self.access_token:
             raise Exception("Must authenticate first")
 
-        async def _get_circle():
-            connector = TCPConnector(limit=30, limit_per_host=10)
-            async with ClientSession(connector=connector) as session:
-                api = Life360(
-                    session,
-                    max_retries=3,
-                    authorization=f"Bearer {self.access_token}"
-                )
+        def _coro():
+            async def _inner():
+                session = await self._ensure_session()
+                api = self._make_api()
+                return await api.get_circles()
+            return _inner()
+
+        return self._call_with_retry("get_circles", _coro, retry=retry)
+
+    def get_circle(self, circle_id, retry=True):
+        """Get circle member details."""
+        if not self.access_token:
+            raise Exception("Must authenticate first")
+
+        def _coro():
+            async def _inner():
+                session = await self._ensure_session()
+                api = self._make_api()
                 return await api.get_circle(circle_id)
+            return _inner()
 
-        return self._run_async(_get_circle())
+        return self._call_with_retry("get_circle", _coro, retry=retry)
 
-    def get_circle_places(self, circle_id):
+    def get_circle_places(self, circle_id, retry=True):
         """Get places for a circle."""
         if not self.access_token:
             raise Exception("Must authenticate first")
 
-        async def _get_places():
-            connector = TCPConnector(limit=30, limit_per_host=10)
-            async with ClientSession(connector=connector) as session:
-                api = Life360(
-                    session,
-                    max_retries=3,
-                    authorization=f"Bearer {self.access_token}"
-                )
+        def _coro():
+            async def _inner():
+                session = await self._ensure_session()
+                api = self._make_api()
                 return await api.get_circle_places(circle_id)
+            return _inner()
 
-        return self._run_async(_get_places())
+        return self._call_with_retry("get_circle_places", _coro, retry=retry)

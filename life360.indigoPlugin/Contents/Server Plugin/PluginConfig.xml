@@ -15,6 +15,11 @@
 		<Label>Enter Authorization Token (Bearer token):</Label>
 		<Description>Preferred auth method. Log into life360.com in a browser, open Developer Tools → Network, log in, find the POST to oauth2/token, and copy the access_token value. Paste just the token value here (without "Bearer ").</Description>
 	</Field>
+	<Field id="circle_id_override" type="textfield" defaultValue="">
+		<Label>Circle ID (optional):</Label>
+		<Description>If Life360 keeps blocking circle lookups (403 errors), enter your Circle UUID here to skip that API call. Example: d841bd4f-3bb1-46f7-b25f-810635e3d2af</Description>
+	</Field>
+
 	<Field type="label" id="validationlabel" defaultValue="validation goes here">
 		<Label>Plugin Config will not close unless API authentication passes. Check the Event Log for messages</Label>
 		<Description></Description>

@@ -142,7 +142,18 @@ class Plugin(indigo.PluginBase):
 		self.placesdata = {}
 		self.member_list = {}
 		self.places_list = {}
-		
+
+		# Persistent API client — reused across polling cycles to preserve session/cookies
+		self._api = None
+
+		# Set when the API rejects our token (401/403) — cleared by closedPrefsConfigUi
+		self.auth_error = False
+
+		# Optional circle ID override — skips the blocked /v4/circles API call
+		self.circle_id_override = self._parse_circle_id(
+			self.pluginPrefs.get('circle_id_override', '')
+		)
+
 		# Load cached data on startup
 		self.load_cache()
 
@@ -178,42 +189,48 @@ class Plugin(indigo.PluginBase):
 
 		self.logger.debug("Current polling frequency is: " + str(pollingFreq) + " seconds")
 
-		# On first iteration, try quickly without long retries so plugin starts fast
-		# If that fails, schedule a background retry with long delays
 		iterationcount = 1
 		needs_background_retry = False
 
 		try:
 			while True:
-				if (iterationcount > 1):
-					self.sleep(1 * pollingFreq)
-				
+				if iterationcount > 1:
+					# When auth is broken, slow down to one reminder per 5 minutes
+					# so the log isn't flooded while waiting for the user to update creds
+					self.sleep(300 if self.auth_error else pollingFreq)
+
+				# If auth is broken, just remind the user and skip API calls entirely
+				if self.auth_error:
+					self.logger.error(
+						"Waiting for valid credentials — open Plugins → Life360 → Configure... "
+						"to update your Bearer token. Plugin will resume automatically once saved."
+					)
+					iterationcount += 1
+					continue
+
 				# On first iteration, try without long retries
 				if iterationcount == 1:
 					success = self.get_new_life360json(retry_on_startup=False)
-					if not success:
+					if not success and not self.auth_error:
 						self.logger.warning(
 							"Could not retrieve Circles & Members on startup. "
-							"Will retry in background with longer delays. "
-							"Devices will update once data is retrieved."
+							"Will retry in background. Devices will update once data is retrieved."
 						)
 						needs_background_retry = True
 				# If we need background retry, do it with long retry delays
 				elif needs_background_retry:
-					self.logger.info("Starting background retry for Circles & Members with extended delays...")
+					self.logger.info("Starting background retry for Circles & Members...")
 					success = self.get_new_life360json(retry_on_startup=True)
 					if success:
-						self.logger.warning("Background retry succeeded - Circles & Members retrieved")
+						self.logger.info("Background retry succeeded — Circles & Members retrieved")
 						needs_background_retry = False
-					# If still failing after background retry, will try again next cycle
 				# Normal periodic updates
 				else:
 					self.get_new_life360json(retry_on_startup=False)
-				
+
 				iterationcount += 1
 				self.logger.debug(self.deviceList)
 				for deviceId in self.deviceList:
-					# call the update method with the device instance
 					self.update(indigo.devices[deviceId])
 					self.updatedevicestates(indigo.devices[deviceId])
 				for geoDeviceId in self.geoDeviceList:
@@ -376,32 +393,37 @@ class Plugin(indigo.PluginBase):
 		If authorization_token is provided, use it as Bearer token.
 		Otherwise, try username/password (legacy - may not work due to Cloudflare).
 		"""
+		from life360.exceptions import LoginError, RateLimited
 		try:
 			if authorization_token and authorization_token.strip():
-				# Use as bearer access token
 				self.logger.debug("Validating with Bearer Token")
 				api = SyncLife360(access_token=authorization_token.strip(), logger=self.logger)
 			elif username and password:
-				# Use username/password method (legacy)
 				self.logger.debug("Validating with Username/Password")
-				# Note: This may not work due to Cloudflare blocking
 				api = SyncLife360(username=username, password=password, logger=self.logger)
 			else:
 				self.logger.debug("No credentials provided")
 				return False
-			
-			if api.authenticate():
-				# Try to get circles to verify the token works
-				try:
-					circles = api.get_circles()
-					self.logger.debug("Validation of API was successful")
-					return True
-				except Exception as e:
-					self.logger.debug("Error getting circles during validation: " + str(e))
-					return False
-			else:
+
+			if not api.authenticate():
 				self.logger.debug("Validation of API FAILED")
 				return False
+
+			# Quick check — retry=False so we fail fast and don't block the UI thread.
+			# LoginError (403) and RateLimited (429) are transient Life360 server responses
+			# that do NOT mean the credentials are wrong, so we accept those as "valid".
+			try:
+				api.get_circles(retry=False)
+				self.logger.debug("Validation of API was successful")
+			except (LoginError, RateLimited) as e:
+				self.logger.warning(
+					"Credentials accepted but Life360 is temporarily blocking circle access "
+					f"({type(e).__name__}). Config saved — the plugin will retry in the background."
+				)
+			except Exception as e:
+				self.logger.debug("Error getting circles during validation: " + str(e))
+				return False
+			return True
 		except Exception as e:
 			self.logger.debug("Error authenticating: " + str(e))
 			return False
@@ -461,18 +483,23 @@ class Plugin(indigo.PluginBase):
 
 
 	def get_member_list(self, filter="", valuesDict=None, typeId="", targetId=0):
-		if (len(self.member_list) == 0):
+		if not self.member_list:
 			self.create_member_list()
-		retList = list(self.member_list.keys())
-		return retList
+		if not self.member_list:
+			return [("waiting", "-- Waiting for Life360 data, check Event Log --")]
+		return list(self.member_list.keys())
 
 
 	def get_places_list(self, filter="", valuesDict=None, typeId="", targetId=0):
-		if (len(self.places_list) == 0):
+		if not self.places_list:
 			self.create_places_list()
 		retList = list(self.places_list.keys())
 		return retList
 
+
+	def _parse_circle_id(self, raw):
+		"""Return the circle UUID from user input, or None if empty."""
+		return raw.strip() if raw and raw.strip() else None
 
 	def get_new_life360json(self, retry_on_startup=False):
 		"""
@@ -483,26 +510,34 @@ class Plugin(indigo.PluginBase):
 							 If False, will fail fast and return quickly (for startup).
 		"""
 		try:
-			# Use authorization_token as bearer token if available, otherwise fall back to username/password
-			if self.authorization_token and self.authorization_token.strip():
-				api = SyncLife360(access_token=self.authorization_token.strip(), logger=self.logger)
-			elif self.username and self.password:
-				api = SyncLife360(username=self.username, password=self.password, logger=self.logger)
-			else:
-				self.logger.error("No authentication credentials configured")
-				return False
+			# Reuse the persistent API client if we have one; otherwise create it.
+			# Keeping the same SyncLife360 instance preserves the aiohttp session
+			# and cookies across polling cycles — matching how HA handles this.
+			if self._api is None:
+				if self.authorization_token and self.authorization_token.strip():
+					self._api = SyncLife360(access_token=self.authorization_token.strip(), logger=self.logger)
+				elif self.username and self.password:
+					self._api = SyncLife360(username=self.username, password=self.password, logger=self.logger)
+				else:
+					self.logger.error("No authentication credentials configured")
+					return False
 		except Exception as g:
 			self.logger.error(str(g))
 			self.logger.error("Error creating Life360 API object")
 			return False
-			
+
+		api = self._api
 		if api.authenticate():
 			try:
 				self.logger.debug("Attempting to get list of circles and places")
-				circles = api.get_circles(retry=retry_on_startup)
-				id = circles[0]['id']
-				circle = api.get_circle(id)
-				places = api.get_circle_places(id)
+				if self.circle_id_override:
+					self.logger.debug(f"Using Circle ID override: {self.circle_id_override}")
+					circle_id = self.circle_id_override
+				else:
+					circles = api.get_circles(retry=retry_on_startup)
+					circle_id = circles[0]['id']
+				circle = api.get_circle(circle_id, retry=retry_on_startup)
+				places = api.get_circle_places(circle_id, retry=retry_on_startup)
 				self.life360data = circle
 				self.placesdata = places
 				self.create_member_list()
@@ -513,26 +548,42 @@ class Plugin(indigo.PluginBase):
 				
 				return True
 			except Exception as e:
-				self.logger.error(str(e))
-				self.logger.error("Error retrieving circles/places data")
+				from life360.exceptions import LoginError, Unauthorized
+				if isinstance(e, Unauthorized):
+					# 401 = definitively bad/expired token, stop retrying
+					self.auth_error = True
+					self.logger.error(
+						"Life360 rejected the token (401 Unauthorized) — token has expired. "
+						"Open Plugins → Life360 → Configure... and paste a fresh Bearer token."
+					)
+				elif isinstance(e, LoginError):
+					# 403 = Life360 is temporarily blocking circle access — keep retrying
+					self.logger.warning(
+						"Life360 is blocking circle access (403). "
+						"This is a known Life360 API behaviour — the plugin will keep retrying."
+					)
+				else:
+					self.logger.error("Error retrieving circles/places data: " + str(e))
 				return False
 		else:
-			self.logger.error("Error retrieving new Life360 JSON, Make sure you have the correct credentials in Plugin Config")
+			self.auth_error = True
+			self.logger.error(
+				"Authentication failed — open Plugins → Life360 → Configure... "
+				"and check your Bearer token or username/password."
+			)
 			return False
 
 
 	def create_member_list(self):
-		if len(self.life360data) == 0:
-			self.get_new_life360json()
+		if not self.life360data.get('members'):
+			return
 		self.member_list.clear()
 		for m in self.life360data['members']:
 			self.member_list[m['firstName']] = m['id']
-		return
-
 
 	def create_places_list(self):
-		if len(self.life360data) == 0:
-			self.get_new_life360json()
+		if not self.placesdata.get('places'):
+			return
 		self.places_list.clear()
 		for p in self.placesdata['places']:
 			self.places_list[p['name']] = p['id']
@@ -540,6 +591,33 @@ class Plugin(indigo.PluginBase):
 		self.logger.debug(self.places_list)
 
 
+	########################################
+	def closedPrefsConfigUi(self, valuesDict, userCancelled):
+		if userCancelled:
+			return
+		# Reload credentials from the saved prefs
+		self.authorization_token = self.pluginPrefs.get('authorizationtoken', None)
+		self.username = self.pluginPrefs.get('life360_username', None)
+		self.password = self.pluginPrefs.get('life360_password', None)
+		self.refresh_frequency = self.pluginPrefs.get('refresh_frequency', 30)
+		self.debug = self.pluginPrefs.get('showDebugInfo', False)
+		self.circle_id_override = self._parse_circle_id(
+			self.pluginPrefs.get('circle_id_override', '')
+		)
+		if self.circle_id_override:
+			self.logger.info(f"Circle ID override set: {self.circle_id_override}")
+		# Close the old session so the next poll starts a fresh one with new credentials
+		if self._api is not None:
+			try:
+				self._api.close()
+			except Exception:
+				pass
+			self._api = None
+		# Clear any auth error so the polling loop retries immediately
+		self.auth_error = False
+		self.logger.info("Plugin preferences saved — resuming Life360 data polling")
+
+	########################################
 	def toggleDebugging(self):
 		if self.debug:
 			self.debug = False
